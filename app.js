@@ -88,7 +88,7 @@ function renderDiscovery() {
 
 function renderTimeline() {
   const now = new Date();
-  const months = Array.from({ length: 4 }, (_, i) => new Date(now.getFullYear(), now.getMonth() + i, 1));
+  const months = Array.from({ length: 6 }, (_, i) => new Date(now.getFullYear(), now.getMonth() + i, 1));
   $("#timeline").innerHTML = months.map(month => {
     const events = sortedOpportunities().filter(op => {
       const d = new Date(nextActionable(op).datetime);
