@@ -1,0 +1,29 @@
+{
+  "name": "Adarsha",
+  "initials": "AK",
+  "research_areas": [
+    "Computer Vision",
+    "Deep Learning",
+    "Stochastic Deep Learning",
+    "Explainable AI",
+    "Multimodal Learning",
+    "Medical Imaging",
+    "3D Perception",
+    "Remote Sensing",
+    "Foundation Models",
+    "Representation Learning"
+  ],
+  "current_projects": [
+    "Explanation stability in deep models",
+    "UAV multimodal sensing",
+    "Stochastic deep learning"
+  ],
+  "keywords": [
+    "Grad-CAM",
+    "LiDAR",
+    "multimodal fusion",
+    "uncertainty",
+    "stochastic optimization",
+    "3D perception"
+  ]
+}

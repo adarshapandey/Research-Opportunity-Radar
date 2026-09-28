@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A personal AI research-opportunity radar for verified conference and workshop deadlines." />
+    <meta name="theme-color" content="#07111f" />
+    <title>Research Radar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2307111f'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%235de0c1' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='9' fill='none' stroke='%23f5b963' stroke-width='3'/%3E%3Ccircle cx='43' cy='20' r='4' fill='%23f5b963'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#radar" aria-label="Research Radar home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+          <span>Research <b>Radar</b></span>
+        </a>
+        <nav class="nav" aria-label="Main navigation">
+          <button class="nav-link active" data-view="radar">Radar</button>
+          <button class="nav-link" data-view="discoveries">Discoveries <span id="discovery-count" class="nav-count">3</span></button>
+          <button class="nav-link" data-view="watchlist">Watchlist</button>
+        </nav>
+        <div class="top-actions">
+          <button class="icon-button" id="search-button" aria-label="Search opportunities">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+          </button>
+          <button class="avatar" id="profile-button" aria-label="Open research profile">AK</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="view active" id="view-radar" aria-labelledby="radar-title">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow" id="today-label">Sunday, September 27</p>
+              <h1 id="radar-title">Your research horizon</h1>
+            </div>
+            <div class="signal-status"><span></span> Radar scanned <b id="scan-age">recently</b></div>
+          </div>
+
+          <div class="demo-notice" role="note">
+            <span>Prototype data</span>
+            Dates below demonstrate the experience and are not submission advice. Connect Gemini to replace them with verified live records.
+            <button id="dismiss-demo" aria-label="Dismiss prototype notice">×</button>
+          </div>
+
+          <section class="hero-card" id="hero-card" aria-label="Next deadline">
+            <div class="hero-copy">
+              <div class="hero-label"><span></span> Next deadline</div>
+              <div class="hero-event-meta" id="hero-type">MAIN CONFERENCE · STRONG MATCH</div>
+              <h2 id="hero-title">Loading opportunities…</h2>
+              <p class="hero-milestone" id="hero-milestone"></p>
+              <div class="hero-actions">
+                <button class="primary-button" id="open-hero">Open opportunity <span>↗</span></button>
+                <button class="quiet-button watch-button" id="watch-hero"><span>＋</span> Track</button>
+              </div>
+            </div>
+            <div class="deadline-orbit" aria-label="Deadline countdown">
+              <div class="orbit-ring ring-one"></div>
+              <div class="orbit-ring ring-two"></div>
+              <div class="orbit-dot"></div>
+              <div class="countdown">
+                <strong id="hero-days">—</strong>
+                <span>days left</span>
+              </div>
+              <div class="deadline-date" id="hero-date"></div>
+            </div>
+            <div class="match-reason">
+              <span class="spark-icon">✦</span>
+              <div><b>Why you're seeing this</b><p id="hero-reason"></p></div>
+            </div>
+          </section>
+
+          <div class="radar-grid">
+            <section class="panel coming-panel">
+              <div class="section-heading">
+                <div><p class="eyebrow">Coming up</p><h2>Deadlines in range</h2></div>
+                <div class="segmented" role="group" aria-label="Opportunity filter">
+                  <button class="active" data-filter="all">All</button>
+                  <button data-filter="conference">Conferences</button>
+                  <button data-filter="workshop">Workshops</button>
+                </div>
+              </div>
+              <div class="opportunity-list" id="opportunity-list"></div>
+              <button class="text-button" id="view-all">View all opportunities <span>→</span></button>
+            </section>
+
+            <section class="panel discovery-panel">
+              <div class="section-heading">
+                <div><p class="eyebrow accent">AI discoveries</p><h2>Found for your work</h2></div>
+                <button class="icon-button small" id="next-discovery" aria-label="Next discovery">→</button>
+              </div>
+              <div id="discovery-card"></div>
+            </section>
+          </div>
+
+          <section class="panel timeline-panel">
+            <div class="section-heading timeline-heading">
+              <div><p class="eyebrow">Research timeline</p><h2>The next four months</h2></div>
+              <div class="timeline-key"><span class="conference-dot"></span> Conference <span class="workshop-dot"></span> Workshop</div>
+            </div>
+            <div class="timeline" id="timeline"></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-discoveries" aria-labelledby="discoveries-title">
+          <div class="page-heading inner-heading"><div><p class="eyebrow accent">Fresh signals</p><h1 id="discoveries-title">AI discoveries</h1><p>Specialized calls found beyond your usual watchlist.</p></div></div>
+          <div class="card-grid" id="discoveries-grid"></div>
+        </section>
+
+        <section class="view" id="view-watchlist" aria-labelledby="watchlist-title">
+          <div class="page-heading inner-heading"><div><p class="eyebrow">Your shortlist</p><h1 id="watchlist-title">Watchlist</h1><p>Opportunities you chose to keep in view, independent of AI ranking.</p></div></div>
+          <div class="card-grid" id="watchlist-grid"></div>
+          <div class="empty-state" id="watchlist-empty"><span>⌁</span><h2>Your watchlist is quiet</h2><p>Track an opportunity from the radar to keep it here.</p><button class="primary-button" data-go="radar">Explore the radar</button></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="search-overlay" id="search-overlay" hidden>
+      <div class="search-box" role="dialog" aria-modal="true" aria-label="Search opportunities">
+        <div class="search-input-wrap"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="search-input" placeholder="Search topics, venues, locations…" autocomplete="off" /><kbd>esc</kbd></div>
+        <div class="search-results" id="search-results"></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="detail-modal" hidden>
+      <article class="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+        <button class="close-button" data-close="detail-modal" aria-label="Close details">×</button>
+        <div id="detail-content"></div>
+      </article>
+    </div>
+
+    <div class="modal-backdrop" id="profile-modal" hidden>
+      <article class="profile-sheet" role="dialog" aria-modal="true" aria-labelledby="profile-title">
+        <button class="close-button" data-close="profile-modal" aria-label="Close profile">×</button>
+        <p class="eyebrow accent">Personalization</p><h2 id="profile-title">Research profile</h2><p class="modal-intro">The radar uses these signals to explain relevance. Edit them as your PhD evolves.</p>
+        <form id="profile-form">
+          <label>Research areas<textarea name="areas" rows="3"></textarea><small>One topic per line</small></label>
+          <label>Current projects<textarea name="projects" rows="3"></textarea><small>Concrete work gets stronger matches</small></label>
+          <label>Keywords<textarea name="keywords" rows="3"></textarea><small>Methods, modalities, and application domains</small></label>
+          <div class="form-actions"><button type="button" class="quiet-button" data-close="profile-modal">Cancel</button><button type="submit" class="primary-button">Save profile</button></div>
+        </form>
+      </article>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

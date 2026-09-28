@@ -1,0 +1,124 @@
+{
+  "generated_at": "2026-09-27T08:00:00Z",
+  "data_mode": "demonstration",
+  "opportunities": [
+    {
+      "id": "iclr-2027",
+      "title": "ICLR 2027",
+      "type": "conference",
+      "type_label": "Main conference",
+      "year": 2027,
+      "organization": "International Conference on Learning Representations",
+      "location": { "city": "Rio de Janeiro", "country": "Brazil", "virtual": false },
+      "topics": ["representation learning", "deep learning", "foundation models"],
+      "milestones": [
+        { "type": "abstract_submission", "label": "Abstract submission", "datetime": "2026-09-28T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "September 28, 2026, 11:59 PM AoE" },
+        { "type": "paper_submission", "label": "Paper submission", "datetime": "2026-10-01T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "October 1, 2026, 11:59 PM AoE" },
+        { "type": "notification", "label": "Decision notification", "datetime": "2027-01-25T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "January 25, 2027" }
+      ],
+      "source": { "url": "https://iclr.cc/", "type": "Official conference site", "last_verified": "2026-09-27T08:00:00Z", "evidence": "Demonstration record. Replace through the discovery workflow before relying on this date." },
+      "relevance": { "level": "high", "label": "Strong match", "matched_topics": ["representation learning", "deep learning", "foundation models"], "reason": "Strong overlap with your work in representation learning, foundation models, and stochastic deep learning." },
+      "discovered": false,
+      "updated": false
+    },
+    {
+      "id": "cvpr-2027",
+      "title": "CVPR 2027",
+      "type": "conference",
+      "type_label": "Main conference",
+      "year": 2027,
+      "organization": "IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+      "location": { "city": "TBD", "country": "Global", "virtual": false },
+      "topics": ["computer vision", "multimodal learning", "3D perception"],
+      "milestones": [
+        { "type": "abstract_submission", "label": "Abstract submission", "datetime": "2026-11-06T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "November 6, 2026, 11:59 PM AoE" },
+        { "type": "paper_submission", "label": "Paper submission", "datetime": "2026-11-13T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "November 13, 2026, 11:59 PM AoE" },
+        { "type": "supplementary_material", "label": "Supplementary material", "datetime": "2026-11-20T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "November 20, 2026, 11:59 PM AoE" },
+        { "type": "notification", "label": "Decision notification", "datetime": "2027-02-22T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "February 22, 2027" }
+      ],
+      "source": { "url": "https://cvpr.thecvf.com/", "type": "Official conference site", "last_verified": "2026-09-27T08:00:00Z", "evidence": "Demonstration record. Replace through the discovery workflow before relying on this date." },
+      "relevance": { "level": "high", "label": "Strong match", "matched_topics": ["computer vision", "multimodal learning", "3D perception"], "reason": "Strong overlap with your work in computer vision, multimodal sensing, and 3D perception." },
+      "discovered": false,
+      "updated": true,
+      "change_note": "Prototype change signal: paper deadline moved from Nov 10 to Nov 13."
+    },
+    {
+      "id": "xai-vision-2027",
+      "title": "Interpretable Vision Systems",
+      "short_title": "IVS Workshop",
+      "type": "workshop",
+      "type_label": "Attached workshop",
+      "parent_event": "AAAI 2027",
+      "year": 2027,
+      "organization": "Workshop organizing committee",
+      "location": { "city": "Singapore", "country": "Singapore", "virtual": true },
+      "topics": ["explainable AI", "computer vision", "explanation stability"],
+      "milestones": [
+        { "type": "paper_submission", "label": "Paper submission", "datetime": "2026-10-22T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "October 22, 2026, 11:59 PM AoE" },
+        { "type": "notification", "label": "Decision notification", "datetime": "2026-11-18T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "November 18, 2026" },
+        { "type": "camera_ready", "label": "Camera-ready", "datetime": "2026-12-01T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "December 1, 2026" }
+      ],
+      "source": { "url": "https://aaai.org/conference/aaai/", "type": "Parent conference site", "last_verified": "2026-09-27T07:30:00Z", "evidence": "Demonstration workshop inspired by common CFP themes; not an asserted real call." },
+      "relevance": { "level": "high", "label": "Strong match", "matched_topics": ["explainable AI", "computer vision", "explanation stability"], "reason": "The call emphasizes robust explanations for vision models, directly aligning with your explanation-stability project." },
+      "discovered": true,
+      "updated": false
+    },
+    {
+      "id": "multimodal-earth-2027",
+      "title": "Multimodal Earth Observation",
+      "short_title": "MEO Workshop",
+      "type": "workshop",
+      "type_label": "Independent workshop",
+      "parent_event": null,
+      "year": 2027,
+      "organization": "Earth Intelligence Research Network",
+      "location": { "city": "Munich", "country": "Germany", "virtual": true },
+      "topics": ["remote sensing", "multimodal fusion", "foundation models", "UAV sensing"],
+      "milestones": [
+        { "type": "paper_submission", "label": "Paper submission", "datetime": "2026-12-08T17:00:00+01:00", "timezone": "Europe/Berlin", "timezone_label": "Central European Time", "original_text": "December 8, 2026, 5:00 PM CET" },
+        { "type": "notification", "label": "Decision notification", "datetime": "2027-01-12T17:00:00+01:00", "timezone": "Europe/Berlin", "timezone_label": "Central European Time", "original_text": "January 12, 2027, 5:00 PM CET" }
+      ],
+      "source": { "url": "https://www.grss-ieee.org/", "type": "Organizer site", "last_verified": "2026-09-27T06:10:00Z", "evidence": "Demonstration workshop inspired by common CFP themes; not an asserted real call." },
+      "relevance": { "level": "high", "label": "Strong match", "matched_topics": ["remote sensing", "multimodal fusion", "UAV sensing"], "reason": "Its scope combines multimodal fusion, aerial sensing, and Earth observation—the center of your UAV sensing work." },
+      "discovered": true,
+      "updated": false
+    },
+    {
+      "id": "uncertainty-dl-2027",
+      "title": "Uncertainty in Deep Learning",
+      "short_title": "UDL Workshop",
+      "type": "workshop",
+      "type_label": "Attached workshop",
+      "parent_event": "NeurIPS 2026",
+      "year": 2026,
+      "organization": "Workshop organizing committee",
+      "location": { "city": "San Diego", "country": "United States", "virtual": false },
+      "topics": ["uncertainty", "stochastic deep learning", "probabilistic modeling"],
+      "milestones": [
+        { "type": "paper_submission", "label": "Paper submission", "datetime": "2026-10-10T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "October 10, 2026, 11:59 PM AoE" },
+        { "type": "notification", "label": "Decision notification", "datetime": "2026-10-31T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "October 31, 2026" }
+      ],
+      "source": { "url": "https://neurips.cc/", "type": "Parent conference site", "last_verified": "2026-09-27T05:20:00Z", "evidence": "Demonstration workshop inspired by common CFP themes; not an asserted real call." },
+      "relevance": { "level": "high", "label": "Strong match", "matched_topics": ["uncertainty", "stochastic deep learning"], "reason": "A focused fit for your stochastic deep learning research, with explicit emphasis on predictive uncertainty." },
+      "discovered": true,
+      "updated": false
+    },
+    {
+      "id": "miccai-2027",
+      "title": "MICCAI 2027",
+      "type": "conference",
+      "type_label": "Main conference",
+      "year": 2027,
+      "organization": "Medical Image Computing and Computer Assisted Intervention Society",
+      "location": { "city": "TBD", "country": "Global", "virtual": false },
+      "topics": ["medical imaging", "computer vision", "multimodal learning"],
+      "milestones": [
+        { "type": "paper_submission", "label": "Paper submission", "datetime": "2027-02-18T23:59:00-12:00", "timezone": "UTC-12", "timezone_label": "Anywhere on Earth", "original_text": "February 18, 2027, 11:59 PM AoE" }
+      ],
+      "source": { "url": "https://www.miccai.org/", "type": "Official society site", "last_verified": "2026-09-26T21:00:00Z", "evidence": "Demonstration record. Replace through the discovery workflow before relying on this date." },
+      "relevance": { "level": "medium", "label": "Good match", "matched_topics": ["medical imaging", "computer vision"], "reason": "Broad alignment with your medical imaging and computer vision interests; project-level fit depends on the call." },
+      "discovered": false,
+      "updated": false
+    }
+  ]
+}

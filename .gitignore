@@ -1,0 +1,6 @@
+.DS_Store
+.env
+.dev.vars
+node_modules/
+*.log
+architecture.md

@@ -1,0 +1,54 @@
+name: Discover research opportunities
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_gemini_retry:
+        description: Retry cached work blocked by a permanent/configuration error
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "0 1 * * 2"
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: opportunity-discovery
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Discover, extract, and validate calls
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-3.8-flash
+          TAVILY_MAX_QUERIES: 10
+          TAVILY_RESULTS_PER_QUERY: 5
+          TAVILY_MAX_CANDIDATES: 30
+          GEMINI_BATCH_SIZE: 10
+          GEMINI_RETRY_INTERVAL_MINUTES: 15
+          RECOVERY_ONLY: ${{ github.event_name == 'schedule' && github.event.schedule == '*/15 * * * *' }}
+          FORCE_GEMINI_RETRY: ${{ github.event.inputs.force_gemini_retry || 'false' }}
+        run: node scripts/discover.mjs
+      - name: Commit verified data changes
+        if: always()
+        run: |
+          if [ -z "$(git status --porcelain -- data/opportunities.json data/discovery-cache.json)" ]; then
+            echo "No opportunity or discovery-cache changes"
+            exit 0
+          fi
+          git config user.name "research-radar-bot"
+          git config user.email "research-radar-bot@users.noreply.github.com"
+          git add -A -- data
+          git commit -m "data: checkpoint research discovery"
+          git push

@@ -1,0 +1,15 @@
+{
+  "name": "ai-research-opportunity-radar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "check": "node --check app.js && node --check scripts/discover.mjs && node --check scripts/discovery-queries.mjs && node --check scripts/providers/tavily.mjs && node --check scripts/providers/gemini.mjs && node --check scripts/lib/opportunity-store.mjs",
+    "discover": "node scripts/discover.mjs",
+    "test": "node --test scripts/tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
