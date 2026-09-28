@@ -3,7 +3,11 @@ import { canonicalizeUrl, normalizeTitle } from "../discovery-queries.mjs";
 
 function validTimezone(value) {
   if (typeof value !== "string" || !value.trim()) return false;
-  if (/^UTC(?:[+-](?:(?:0?\d|1[0-3])(?::?[0-5]\d)?|14(?::?00)?))?$/i.test(value)) return true;
+  // Explicit UTC offsets are valid deadline timezone metadata. Accept both
+  // "UTC-12" and bare ISO-style offsets such as "-12:00" consistently;
+  // Node 20's Intl implementation does not recognize bare offsets as zones.
+  if (/^(?:UTC)?(?:[+-](?:(?:0?\d|1[0-3])(?::?[0-5]\d)?|14(?::?00)?))$/i.test(value)) return true;
+  if (/^UTC$/i.test(value)) return true;
   try {
     new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
     return true;

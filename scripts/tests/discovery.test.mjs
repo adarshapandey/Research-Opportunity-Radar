@@ -116,6 +116,25 @@ test("validation requires evidence for each milestone", () => {
   assert.ok(errors.includes("missing milestone evidence"));
 });
 
+test("validation accepts bare numeric timezone offsets on every supported Node version", () => {
+  const withBareOffset = opportunity({
+    milestones: [{
+      type: "paper_submission",
+      label: "Paper submission",
+      datetime: "2026-11-08T23:59:00-12:00",
+      timezone: "-12:00",
+      timezone_label: "Anywhere on Earth",
+      original_text: "November 8, 2026, 11:59 PM AoE",
+      evidence: "The official page states the submission deadline."
+    }]
+  });
+  const errors = validateOpportunity(
+    withBareOffset,
+    new Set([canonicalizeUrl("https://example.org/official-cfp")])
+  );
+  assert.deepEqual(errors, []);
+});
+
 const quietLogger = { log() {}, warn() {}, error() {} };
 
 async function temporaryWorkspace() {
@@ -234,6 +253,50 @@ test("completed outputs from an older all-or-nothing cache are merged without AP
   assert.equal(tavilyCalls, 0);
   assert.equal(geminiCalls, 0);
   const output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
+  assert.deepEqual(output.opportunities.map(item => item.title), ["Official Test Workshop 1"]);
+  await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
+});
+
+test("completed output rejected by older timezone validation is revalidated without API calls", async () => {
+  const root = await temporaryWorkspace();
+  const candidate = tavilyResponse(1).results[0];
+  const cachedOpportunity = extractedOpportunity(candidate, 0);
+  cachedOpportunity.milestones[0].timezone = "-12:00";
+  await writeFile(join(root, "data/discovery-cache.json"), `${JSON.stringify({
+    version: 1,
+    created_at: "2026-09-27T11:00:00Z",
+    updated_at: "2026-09-27T11:05:00Z",
+    discovery: { current_date: "2026-09-27", query_log: [], tavily_summary: {}, configuration: { geminiBatchSize: 1 } },
+    gemini_context: { profile, existing_opportunities: [] },
+    candidates: [candidate],
+    batches: [{
+      index: 0,
+      candidate_indexes: [0],
+      status: "completed",
+      completed_at: "2026-09-27T11:04:00Z",
+      merged_at: "2026-09-27T11:04:00Z",
+      merge_stats: { received: 1, accepted: 0, rejected: 1, duplicates: 0, newRecords: 0, updatedRecords: 0 },
+      opportunities: [cachedOpportunity]
+    }],
+    state: { status: "pending", attempts: 0, last_error: null, next_retry_at: null }
+  }, null, 2)}\n`);
+
+  let tavilyCalls = 0;
+  let geminiCalls = 0;
+  const result = await runDiscovery({
+    root,
+    env: {},
+    now: () => new Date("2026-09-27T12:00:00Z"),
+    search: async () => { tavilyCalls++; return tavilyResponse(1); },
+    extract: async () => { geminiCalls++; return { opportunities: [] }; },
+    logger: quietLogger
+  });
+
+  assert.equal(result.outcome, "completed");
+  assert.equal(tavilyCalls, 0);
+  assert.equal(geminiCalls, 0);
+  const output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
+  assert.equal(output.data_mode, "live");
   assert.deepEqual(output.opportunities.map(item => item.title), ["Official Test Workshop 1"]);
   await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
 });

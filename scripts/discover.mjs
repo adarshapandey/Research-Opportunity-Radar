@@ -13,6 +13,7 @@ import { mergeOpportunities } from "./lib/opportunity-store.mjs";
 
 const defaultRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE_VERSION = 1;
+const MERGE_VALIDATION_VERSION = 2;
 const TRANSIENT_GEMINI_STATUSES = new Set([429, 500, 502, 503, 504]);
 const PERMANENT_GEMINI_STATUSES = new Set([400, 401, 403, 404]);
 
@@ -102,6 +103,7 @@ async function mergeBatchIntoOpportunities({ batch, candidates, current, opportu
   Object.assign(current, nextData);
   batch.merged_at = verifiedAt;
   batch.merge_stats = stats;
+  batch.merge_validation_version = MERGE_VALIDATION_VERSION;
   return stats;
 }
 
@@ -150,10 +152,15 @@ export async function runDiscovery({
   if (cache) {
     logger.log("Pending discovery cache found. Skipping Tavily discovery.");
 
-    // Version-1 caches created by the previous all-or-nothing pipeline can
-    // contain completed Gemini outputs that were never merged. Reconcile them
-    // before applying retry gates; this requires no Gemini or Tavily request.
-    for (const batch of cache.batches.filter(item => item.status === "completed" && !item.merged_at)) {
+    // Older caches can contain completed Gemini output that was never merged,
+    // or was rejected under an earlier validation implementation. Reconcile it
+    // once under the current rules before applying retry gates. This requires
+    // no Gemini or Tavily request and remains idempotent through normal identity
+    // matching in mergeOpportunities.
+    for (const batch of cache.batches.filter(item =>
+      item.status === "completed"
+      && (!item.merged_at || item.merge_validation_version !== MERGE_VALIDATION_VERSION)
+    )) {
       const verifiedAt = now().toISOString();
       const stats = await mergeBatchIntoOpportunities({
         batch,
@@ -281,6 +288,7 @@ export async function runDiscovery({
         completed_at: null,
         merged_at: null,
         merge_stats: null,
+        merge_validation_version: null,
         opportunities: []
       })),
       state: { status: "pending", attempts: 0, last_error: null, next_retry_at: null }
