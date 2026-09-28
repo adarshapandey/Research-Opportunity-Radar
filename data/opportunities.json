@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-28T23:12:37.186Z",
-  "data_mode": "demonstration",
+  "generated_at": "2026-09-28T23:47:51.740Z",
+  "data_mode": "live",
   "opportunities": [
     {
       "id": "iclr-2027",
@@ -354,6 +354,104 @@
         "reason": "Broad alignment with your medical imaging and computer vision interests; project-level fit depends on the call."
       },
       "discovered": false,
+      "updated": false
+    },
+    {
+      "id": "aistats-2027-30th-international-conference-on-artifici-2027-ec12a616",
+      "title": "AISTATS 2027: 30th International Conference on Artificial Intelligence and Statistics",
+      "type": "conference",
+      "type_label": "Main conference",
+      "parent_event": null,
+      "year": 2027,
+      "organization": "AISTATS",
+      "location": {
+        "city": "Montreal",
+        "country": "Canada",
+        "virtual": false
+      },
+      "topics": [
+        "Machine learning methods and algorithms",
+        "Probabilistic methods",
+        "Theory of machine learning and statistics",
+        "Optimization"
+      ],
+      "publication": {
+        "archival": true,
+        "details": "Accepted papers will be published in the AISTATS Conference Proceedings as part of the Journal of Machine Learning Research Workshop and Conference Proceedings series by Proceedings of Machine Learning Research (PMLR)."
+      },
+      "milestones": [
+        {
+          "type": "abstract_submission",
+          "label": "Abstract submission deadline",
+          "datetime": "2026-09-29T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Abstract submission deadline: Tuesday, September 29, 2026",
+          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Abstract submission deadline | Tuesday, September 29, 2026 |"
+        },
+        {
+          "type": "paper_submission",
+          "label": "Full paper submission deadline",
+          "datetime": "2026-10-06T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Full paper submission deadline (including all supplementary material): Tuesday, October 6, 2026",
+          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Full paper submission deadline (including all supplementary material) | Tuesday, October 6, 2026 |"
+        },
+        {
+          "type": "workshop_proposal",
+          "label": "Workshop submission deadline",
+          "datetime": "2026-10-20T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Workshop submission deadline: Tuesday, October 20, 2026",
+          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Workshop submission deadline | Tuesday, October 20, 2026 |"
+        },
+        {
+          "type": "rebuttal",
+          "label": "Reviews released and author rebuttal begins",
+          "datetime": "2026-11-16T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Reviews and AI review released to authors; author rebuttal period begins: Monday, November 16, 2026",
+          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Reviews and AI review released to authors; author rebuttal period begins | Monday, November 16, 2026 |"
+        },
+        {
+          "type": "discussion",
+          "label": "Author–reviewer discussion period closes",
+          "datetime": "2026-12-03T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Author–reviewer discussion period: Monday, November 23 – Thursday, December 3, 2026",
+          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Author–reviewer discussion period | Monday, November 23 – Thursday, December 3, 2026 |"
+        },
+        {
+          "type": "notification",
+          "label": "Paper decision notifications",
+          "datetime": "2027-01-20T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Paper decision notifications: Wednesday, January 20, 2027",
+          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Paper decision notifications | Wednesday, January 20, 2027 |"
+        }
+      ],
+      "source": {
+        "url": "https://virtual.aistats.org/Conferences/2027/CallForPapers",
+        "type": "Official CFP",
+        "evidence": "Official Call for Papers page on virtual.aistats.org detailing deadlines, policy updates, and scope for AISTATS 2027.",
+        "last_verified": "2026-09-28T23:47:51.740Z"
+      },
+      "relevance": {
+        "level": "high",
+        "label": "Strong match",
+        "matched_topics": [
+          "Stochastic Deep Learning",
+          "Deep Learning",
+          "Representation Learning"
+        ],
+        "reason": "AISTATS focuses centrally on machine learning algorithms, probabilistic methods, approximate inference, and optimization. This provides a direct methodological fit for the candidate's core research in stochastic deep learning, uncertainty estimation, and stochastic optimization."
+      },
+      "discovered": true,
       "updated": false
     }
   ]
