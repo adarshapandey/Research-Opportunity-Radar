@@ -76,6 +76,35 @@ function batchCandidates(cache, batch) {
   return batch.candidate_indexes.map(index => cache.candidates[index]).filter(Boolean);
 }
 
+function emptyMergeStats() {
+  return { received: 0, accepted: 0, rejected: 0, duplicates: 0, newRecords: 0, updatedRecords: 0 };
+}
+
+function aggregateMergeStats(cache) {
+  return cache.batches.reduce((total, batch) => {
+    for (const key of Object.keys(total)) total[key] += batch.merge_stats?.[key] || 0;
+    return total;
+  }, emptyMergeStats());
+}
+
+async function mergeBatchIntoOpportunities({ batch, candidates, current, opportunitiesPath, verifiedAt }) {
+  const allowedSourceUrls = new Set(candidates.map(candidate => canonicalizeUrl(candidate.url)).filter(Boolean));
+  const { opportunities, stats } = mergeOpportunities(current.opportunities, batch.opportunities || [], verifiedAt, allowedSourceUrls);
+  const nextData = {
+    generated_at: verifiedAt,
+    data_mode: stats.accepted > 0 || current.data_mode === "live" ? "live" : current.data_mode || "demonstration",
+    opportunities
+  };
+
+  // Persist opportunities before marking the batch complete. If the cache
+  // checkpoint fails afterward, deterministic merging makes a retry safe.
+  await writeJsonAtomic(opportunitiesPath, nextData);
+  Object.assign(current, nextData);
+  batch.merged_at = verifiedAt;
+  batch.merge_stats = stats;
+  return stats;
+}
+
 function cacheIsDue(cache, currentTime) {
   if (!cache.state?.next_retry_at) return true;
   const retryAt = Date.parse(cache.state.next_retry_at);
@@ -120,6 +149,31 @@ export async function runDiscovery({
 
   if (cache) {
     logger.log("Pending discovery cache found. Skipping Tavily discovery.");
+
+    // Version-1 caches created by the previous all-or-nothing pipeline can
+    // contain completed Gemini outputs that were never merged. Reconcile them
+    // before applying retry gates; this requires no Gemini or Tavily request.
+    for (const batch of cache.batches.filter(item => item.status === "completed" && !item.merged_at)) {
+      const verifiedAt = now().toISOString();
+      const stats = await mergeBatchIntoOpportunities({
+        batch,
+        candidates: batchCandidates(cache, batch),
+        current,
+        opportunitiesPath,
+        verifiedAt
+      });
+      cache.updated_at = verifiedAt;
+      await writeJsonAtomic(cachePath, cache);
+      logger.log(`[Gemini ${batch.index + 1}/${cache.batches.length}] reconciled cached output: ${stats.accepted} accepted, ${stats.rejected} rejected, ${stats.duplicates} duplicates.`);
+    }
+
+    if (cache.batches.every(batch => batch.status === "completed" && batch.merged_at)) {
+      const stats = aggregateMergeStats(cache);
+      logger.log("All cached Gemini batches were already completed and merged. Deleting discovery cache.");
+      await deleteCache(cachePath);
+      return { outcome: "completed", tavilyRequests: 0, geminiRequests: 0, stats };
+    }
+
     if (cache.state?.status === "blocked" && !forceBlockedRetry) {
       logger.error(`Cached Gemini work is blocked by a permanent/configuration error: ${cache.state.last_error?.message || "unknown error"}`);
       logger.error("Fix the configuration, then retry explicitly with FORCE_GEMINI_RETRY=true. The cache was preserved.");
@@ -220,7 +274,13 @@ export async function runDiscovery({
         index,
         candidate_indexes: batch.map(candidate => candidates.indexOf(candidate)),
         status: "pending",
+        attempts: 0,
+        last_attempt_at: null,
+        last_error: null,
+        extracted_at: null,
         completed_at: null,
+        merged_at: null,
+        merge_stats: null,
         opportunities: []
       })),
       state: { status: "pending", attempts: 0, last_error: null, next_retry_at: null }
@@ -229,9 +289,9 @@ export async function runDiscovery({
     await writeJsonAtomic(cachePath, cache);
   }
 
-  const pendingBatches = cache.batches.filter(batch => batch.status !== "completed");
-  if (pendingBatches.length && !env.GEMINI_API_KEY) {
-    throw new Error(`Pending cache has ${pendingBatches.length} unfinished Gemini batch(es). Set GEMINI_API_KEY to resume; Tavily will remain skipped.`);
+  const batchesNeedingGemini = cache.batches.filter(batch => batch.status !== "completed" && !batch.extracted_at);
+  if (batchesNeedingGemini.length && !env.GEMINI_API_KEY) {
+    throw new Error(`Pending cache has ${batchesNeedingGemini.length} batch(es) requiring Gemini. Set GEMINI_API_KEY to resume; Tavily will remain skipped.`);
   }
 
   if (forceBlockedRetry && cache.state?.status === "blocked") {
@@ -254,59 +314,76 @@ export async function runDiscovery({
     }
 
     const candidates = batchCandidates(cache, batch);
-    geminiRequestsThisRun++;
-    logger.log(`[Gemini ${batch.index + 1}/${cache.batches.length}] analyzing ${candidates.length} cached Tavily candidates.`);
-    try {
-      const result = await extract({
-        apiKey: env.GEMINI_API_KEY,
-        model: env.GEMINI_MODEL || "gemini-3.8-flash",
-        profile: cache.gemini_context?.profile || profile,
-        existing: cache.gemini_context?.existing_opportunities || current.opportunities,
-        candidates,
-        currentDate: cache.discovery.current_date
-      });
-      batch.status = "completed";
-      batch.opportunities = result.opportunities;
-      batch.completed_at = now().toISOString();
-      cache.state.status = "processing";
-      cache.state.last_error = null;
-      cache.updated_at = batch.completed_at;
+    if (!batch.extracted_at) {
+      const attemptAt = now().toISOString();
+      batch.status = "processing";
+      batch.attempts = (batch.attempts || 0) + 1;
+      batch.last_attempt_at = attemptAt;
+      batch.last_error = null;
+      cache.updated_at = attemptAt;
       await writeJsonAtomic(cachePath, cache);
-      logger.log(`  Gemini returned ${result.opportunities.length} opportunity candidate(s); batch checkpoint persisted.`);
-    } catch (error) {
-      const failedAt = now();
-      const state = failureState(error, failedAt, retryMinutes);
-      cache.state = {
-        ...cache.state,
-        status: state.status,
-        attempts: (cache.state.attempts || 0) + 1,
-        last_error: state,
-        next_retry_at: state.next_retry_at
-      };
-      cache.updated_at = failedAt.toISOString();
-      await writeJsonAtomic(cachePath, cache);
-      const statusLabel = state.http_status ? `HTTP ${state.http_status}` : "an unclassified error";
-      logger.error(`Gemini processing failed with ${statusLabel}. Keeping discovery cache for recovery.`);
-      if (state.status === "retry_pending") {
-        logger.error(`No Tavily search will be performed on retry. Next eligible retry: ${state.next_retry_at}.`);
-      } else {
-        logger.error("This appears to be a permanent/configuration error. Automatic retries are blocked until an explicit retry is requested.");
+
+      geminiRequestsThisRun++;
+      logger.log(`[Gemini ${batch.index + 1}/${cache.batches.length}] analyzing ${candidates.length} cached Tavily candidates.`);
+      try {
+        const result = await extract({
+          apiKey: env.GEMINI_API_KEY,
+          model: env.GEMINI_MODEL || "gemini-3.8-flash",
+          profile: cache.gemini_context?.profile || profile,
+          existing: cache.gemini_context?.existing_opportunities || current.opportunities,
+          candidates,
+          currentDate: cache.discovery.current_date
+        });
+        batch.opportunities = result.opportunities;
+        batch.extracted_at = now().toISOString();
+        batch.status = "extracted";
+        cache.updated_at = batch.extracted_at;
+        await writeJsonAtomic(cachePath, cache);
+        logger.log(`  Gemini returned ${result.opportunities.length} opportunity candidate(s); extracted output checkpoint persisted.`);
+      } catch (error) {
+        const failedAt = now();
+        const state = failureState(error, failedAt, retryMinutes);
+        batch.status = state.status === "blocked" ? "blocked" : "retry_pending";
+        batch.last_error = state;
+        cache.state = {
+          ...cache.state,
+          status: state.status,
+          attempts: (cache.state.attempts || 0) + 1,
+          last_error: state,
+          next_retry_at: state.next_retry_at
+        };
+        cache.updated_at = failedAt.toISOString();
+        await writeJsonAtomic(cachePath, cache);
+        const statusLabel = state.http_status ? `HTTP ${state.http_status}` : "an unclassified error";
+        logger.error(`Gemini processing failed with ${statusLabel}. Keeping discovery cache for recovery.`);
+        if (state.status === "retry_pending") {
+          logger.error(`No Tavily search will be performed on retry. Next eligible retry: ${state.next_retry_at}.`);
+        } else {
+          logger.error("This appears to be a permanent/configuration error. Automatic retries are blocked until an explicit retry is requested.");
+        }
+        throw error;
       }
-      throw error;
+    } else {
+      logger.log(`[Gemini ${batch.index + 1}/${cache.batches.length}] extracted checkpoint found; skipping Gemini request and resuming merge.`);
     }
+
+    const verifiedAt = now().toISOString();
+    const stats = await mergeBatchIntoOpportunities({ batch, candidates, current, opportunitiesPath, verifiedAt });
+    batch.status = "completed";
+    batch.completed_at = verifiedAt;
+    batch.last_error = null;
+    cache.state.status = "processing";
+    cache.state.last_error = null;
+    cache.updated_at = verifiedAt;
+    await writeJsonAtomic(cachePath, cache);
+    logger.log(`  Batch merged and checkpointed: ${stats.accepted} accepted, ${stats.newRecords} new, ${stats.updatedRecords} deadline changes, ${stats.rejected} rejected, ${stats.duplicates} duplicates.`);
   }
 
-  const extracted = cache.batches.flatMap(batch => batch.opportunities || []);
-  const verifiedAt = now().toISOString();
-  const allowedSourceUrls = new Set(cache.candidates.map(candidate => canonicalizeUrl(candidate.url)).filter(Boolean));
-  const { opportunities, stats } = mergeOpportunities(current.opportunities, extracted, verifiedAt, allowedSourceUrls);
-
-  logger.log("Gemini processing complete. Writing opportunities.json...");
-  await writeJsonAtomic(opportunitiesPath, { generated_at: verifiedAt, data_mode: "live", opportunities });
-  logger.log("Discovery completed successfully. Deleting discovery cache.");
+  const stats = aggregateMergeStats(cache);
+  logger.log("All Gemini batches are complete and merged. Deleting discovery cache.");
   await deleteCache(cachePath);
 
-  logger.log(`Run summary: ${cache.candidates.length} cached candidates; ${stats.newRecords} new, ${stats.updatedRecords} deadline changes, ${stats.rejected} rejected, ${stats.duplicates} duplicates, ${stats.accepted} accepted.`);
+  logger.log(`Run summary: ${cache.candidates.length} cached candidates; ${stats.newRecords} new, ${stats.updatedRecords} deadline changes, ${stats.rejected} rejected, ${stats.duplicates} duplicates, ${stats.accepted} accepted across completed batches.`);
   logger.log(`API usage this invocation: ${tavilyRequestsThisRun} Tavily request(s), ${geminiRequestsThisRun} Gemini request(s).`);
   return { outcome: "completed", tavilyRequests: tavilyRequestsThisRun, geminiRequests: geminiRequestsThisRun, stats };
 }

@@ -36,11 +36,11 @@ Open `http://localhost:4173`. No install step is required.
 
 Tavily Search returns ranked URLs, snippets, and cleaned page content. Gemini receives only that material and has no web-search tool. Returned records are rejected unless their source URL came from Tavily, their milestones have parseable datetimes with explicit offsets and valid timezone values, and source evidence and a supported relevance label are present. Paper-deadline changes are detected before merging.
 
-The default budget is ten basic Tavily searches per discovery cycle, five results per search, at most thirty unique candidate URLs, and Gemini batches of ten. This means at most three Gemini calls for a new cycle. Tavily results are written to `data/discovery-cache.json` before the first Gemini request. Each successful Gemini batch and its extracted output are checkpointed there.
+The default budget is ten basic Tavily searches per discovery cycle, five results per search, at most thirty unique candidate URLs, and Gemini batches of ten. This means at most three Gemini calls for a new cycle. Tavily results are written to `data/discovery-cache.json` before the first Gemini request. Each successful Gemini batch is immediately validated and merged into `data/opportunities.json`, then marked completed in the cache.
 
 If Gemini returns 429, 500, 502, 503, or 504, the cache remains and records the next eligible retry time. A later recovery invocation skips Tavily and resumes only unfinished Gemini batches. HTTP 400, 401, 403, and 404 mark the cache as blocked so the recovery schedule does not retry a permanent/configuration problem forever. After fixing the configuration, use the manual workflow's **force Gemini retry** option or set `FORCE_GEMINI_RETRY=true` locally. There is no Gemini health-check request.
 
-The workflow commits cache creation and checkpoints even when the discovery command exits with an API error. The cache is deleted only after every Gemini batch has completed and `data/opportunities.json` has been written successfully.
+The workflow commits cache creation, incremental opportunity updates, and checkpoints even when a later Gemini batch exits with an API error. Earlier successful batches remain visible and are not rolled back. The cache is deleted only after every Gemini batch has completed and its merge has been persisted successfully.
 
 Search results can contain stale or incomplete content, and the code does not perform a separate deterministic fetch after Tavily Search. Before relying on a deadline, follow the source link shown in the detail view.
 

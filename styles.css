@@ -58,6 +58,7 @@ main { max-width: 1400px; margin: auto; padding: 44px clamp(20px, 5vw, 76px) 72p
 .signal-status span { width: 7px; height: 7px; border-radius: 50%; background: #27a98a; box-shadow: 0 0 0 4px rgba(39,169,138,.12); }
 .signal-status b { color: var(--ink); font-weight: 600; }
 .demo-notice { display: flex; align-items: center; gap: 10px; background: #fff8e9; border: 1px solid #edddb8; color: #6b5832; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; }
+.demo-notice[hidden] { display: none; }
 .demo-notice span { font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .1em; padding: 4px 7px; background: #f6e5bc; border-radius: 4px; color: #755620; }
 .demo-notice button { margin-left: auto; border: 0; background: transparent; font-size: 18px; color: inherit; }
 

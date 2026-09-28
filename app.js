@@ -216,6 +216,7 @@ async function init() {
   try {
     const [opportunities, profile] = await Promise.all([fetch("data/opportunities.json").then(r => r.json()), fetch("data/profile.json").then(r => r.json())]);
     state.opportunities = opportunities.opportunities;
+    $("#prototype-notice").hidden = opportunities.data_mode !== "demonstration";
     $("#today-label").textContent = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(DEMO_NOW);
     const scanHours = Math.max(0, Math.round((DEMO_NOW - new Date(opportunities.generated_at)) / 3600000));
     $("#scan-age").textContent = opportunities.data_mode === "demonstration" ? "prototype dataset" : scanHours < 1 ? "less than an hour ago" : `${scanHours} hours ago`;
