@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-09-28T16:05:06.367Z",
-  "updated_at": "2026-09-28T17:44:38.411Z",
+  "updated_at": "2026-09-28T22:25:18.448Z",
   "discovery": {
     "current_date": "2026-09-28",
     "query_log": [
@@ -842,9 +842,105 @@
         8,
         9
       ],
-      "status": "pending",
-      "completed_at": null,
-      "opportunities": []
+      "status": "completed",
+      "completed_at": "2026-09-28T22:25:12.317Z",
+      "opportunities": [
+        {
+          "id": "aistats-2027",
+          "title": "AISTATS 2027: 30th International Conference on Artificial Intelligence and Statistics",
+          "type": "conference",
+          "type_label": "Main conference",
+          "parent_event": null,
+          "year": 2027,
+          "organization": "AISTATS",
+          "location": {
+            "city": "Montreal",
+            "country": "Canada",
+            "virtual": false
+          },
+          "topics": [
+            "Machine learning methods and algorithms",
+            "Probabilistic methods",
+            "Theory of machine learning and statistics",
+            "Optimization"
+          ],
+          "publication": {
+            "archival": true,
+            "details": "Accepted papers will be published in the AISTATS Conference Proceedings as part of the Journal of Machine Learning Research Workshop and Conference Proceedings series by Proceedings of Machine Learning Research (PMLR)."
+          },
+          "milestones": [
+            {
+              "type": "abstract_submission",
+              "label": "Abstract submission deadline",
+              "datetime": "2026-09-29T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth",
+              "original_text": "Abstract submission deadline: Tuesday, September 29, 2026",
+              "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Abstract submission deadline | Tuesday, September 29, 2026 |"
+            },
+            {
+              "type": "paper_submission",
+              "label": "Full paper submission deadline",
+              "datetime": "2026-10-06T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth",
+              "original_text": "Full paper submission deadline (including all supplementary material): Tuesday, October 6, 2026",
+              "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Full paper submission deadline (including all supplementary material) | Tuesday, October 6, 2026 |"
+            },
+            {
+              "type": "workshop_proposal",
+              "label": "Workshop submission deadline",
+              "datetime": "2026-10-20T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth",
+              "original_text": "Workshop submission deadline: Tuesday, October 20, 2026",
+              "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Workshop submission deadline | Tuesday, October 20, 2026 |"
+            },
+            {
+              "type": "rebuttal",
+              "label": "Reviews released and author rebuttal begins",
+              "datetime": "2026-11-16T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth",
+              "original_text": "Reviews and AI review released to authors; author rebuttal period begins: Monday, November 16, 2026",
+              "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Reviews and AI review released to authors; author rebuttal period begins | Monday, November 16, 2026 |"
+            },
+            {
+              "type": "discussion",
+              "label": "Author–reviewer discussion period closes",
+              "datetime": "2026-12-03T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth",
+              "original_text": "Author–reviewer discussion period: Monday, November 23 – Thursday, December 3, 2026",
+              "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Author–reviewer discussion period | Monday, November 23 – Thursday, December 3, 2026 |"
+            },
+            {
+              "type": "notification",
+              "label": "Paper decision notifications",
+              "datetime": "2027-01-20T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth",
+              "original_text": "Paper decision notifications: Wednesday, January 20, 2027",
+              "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Paper decision notifications | Wednesday, January 20, 2027 |"
+            }
+          ],
+          "source": {
+            "url": "https://virtual.aistats.org/Conferences/2027/CallForPapers",
+            "type": "Official CFP",
+            "evidence": "Official Call for Papers page on virtual.aistats.org detailing deadlines, policy updates, and scope for AISTATS 2027."
+          },
+          "relevance": {
+            "level": "high",
+            "label": "Strong match",
+            "matched_topics": [
+              "Stochastic Deep Learning",
+              "Deep Learning",
+              "Representation Learning"
+            ],
+            "reason": "AISTATS focuses centrally on machine learning algorithms, probabilistic methods, approximate inference, and optimization. This provides a direct methodological fit for the candidate's core research in stochastic deep learning, uncertainty estimation, and stochastic optimization."
+          }
+        }
+      ]
     },
     {
       "index": 1,
@@ -885,15 +981,15 @@
   ],
   "state": {
     "status": "retry_pending",
-    "attempts": 3,
+    "attempts": 4,
     "last_error": {
       "status": "retry_pending",
       "http_status": 503,
       "classification": "transient",
       "message": "Gemini request failed (503): {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
-      "failed_at": "2026-09-28T17:44:38.411Z",
-      "next_retry_at": "2026-09-28T17:59:38.411Z"
+      "failed_at": "2026-09-28T22:25:18.448Z",
+      "next_retry_at": "2026-09-28T22:40:18.448Z"
     },
-    "next_retry_at": "2026-09-28T17:59:38.411Z"
+    "next_retry_at": "2026-09-28T22:40:18.448Z"
   }
 }
