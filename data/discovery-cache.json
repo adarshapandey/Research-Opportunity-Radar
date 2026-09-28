@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-09-28T16:05:06.367Z",
-  "updated_at": "2026-09-28T22:25:18.448Z",
+  "updated_at": "2026-09-28T23:12:40.123Z",
   "discovery": {
     "current_date": "2026-09-28",
     "query_log": [
@@ -940,7 +940,16 @@
             "reason": "AISTATS focuses centrally on machine learning algorithms, probabilistic methods, approximate inference, and optimization. This provides a direct methodological fit for the candidate's core research in stochastic deep learning, uncertainty estimation, and stochastic optimization."
           }
         }
-      ]
+      ],
+      "merged_at": "2026-09-28T23:12:37.186Z",
+      "merge_stats": {
+        "received": 1,
+        "accepted": 0,
+        "rejected": 1,
+        "duplicates": 0,
+        "newRecords": 0,
+        "updatedRecords": 0
+      }
     },
     {
       "index": 1,
@@ -956,9 +965,19 @@
         18,
         19
       ],
-      "status": "pending",
+      "status": "retry_pending",
       "completed_at": null,
-      "opportunities": []
+      "opportunities": [],
+      "attempts": 1,
+      "last_attempt_at": "2026-09-28T23:12:37.205Z",
+      "last_error": {
+        "status": "retry_pending",
+        "http_status": 503,
+        "classification": "transient",
+        "message": "Gemini request failed (503): {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
+        "failed_at": "2026-09-28T23:12:40.123Z",
+        "next_retry_at": "2026-09-28T23:17:40.123Z"
+      }
     },
     {
       "index": 2,
@@ -981,15 +1000,15 @@
   ],
   "state": {
     "status": "retry_pending",
-    "attempts": 4,
+    "attempts": 5,
     "last_error": {
       "status": "retry_pending",
       "http_status": 503,
       "classification": "transient",
       "message": "Gemini request failed (503): {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
-      "failed_at": "2026-09-28T22:25:18.448Z",
-      "next_retry_at": "2026-09-28T22:40:18.448Z"
+      "failed_at": "2026-09-28T23:12:40.123Z",
+      "next_retry_at": "2026-09-28T23:17:40.123Z"
     },
-    "next_retry_at": "2026-09-28T22:40:18.448Z"
+    "next_retry_at": "2026-09-28T23:17:40.123Z"
   }
 }
