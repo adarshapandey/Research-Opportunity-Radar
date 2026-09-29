@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-28T23:47:51.740Z",
+  "generated_at": "2026-09-29T23:50:19.908Z",
   "data_mode": "live",
   "opportunities": [
     {
@@ -450,6 +450,201 @@
           "Representation Learning"
         ],
         "reason": "AISTATS focuses centrally on machine learning algorithms, probabilistic methods, approximate inference, and optimization. This provides a direct methodological fit for the candidate's core research in stochastic deep learning, uncertainty estimation, and stochastic optimization."
+      },
+      "discovered": true,
+      "updated": false
+    },
+    {
+      "id": "aaai-27-the-41st-annual-aaai-conference-on-artificial--2027-bc96b0d9",
+      "title": "AAAI-27: The 41st Annual AAAI Conference on Artificial Intelligence",
+      "type": "conference",
+      "type_label": "Main conference",
+      "parent_event": null,
+      "year": 2027,
+      "organization": "Association for the Advancement of Artificial Intelligence",
+      "location": {
+        "city": "Montréal",
+        "country": "Canada",
+        "virtual": false
+      },
+      "topics": [
+        "Artificial Intelligence",
+        "Machine Learning",
+        "Deep Learning",
+        "Computer Vision",
+        "AI Alignment",
+        "AI for Social Impact"
+      ],
+      "publication": {
+        "archival": true,
+        "details": "Technical paper presentations and proceedings (Main Technical Track)"
+      },
+      "milestones": [
+        {
+          "type": "abstract_submission",
+          "label": "Abstract submission",
+          "datetime": "2026-07-21T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth (UTC-12)",
+          "original_text": "July 21, 2026 Abstracts due at 11:59 PM UTC-12",
+          "evidence": "July 21, 2026 Abstracts due at 11:59 PM UTC-12"
+        },
+        {
+          "type": "paper_submission",
+          "label": "Full paper submission",
+          "datetime": "2026-07-28T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth (UTC-12)",
+          "original_text": "July 28, 2026 Full papers due at 11:59 PM UTC-12",
+          "evidence": "July 28, 2026 Full papers due at 11:59 PM UTC-12"
+        },
+        {
+          "type": "supplementary_material",
+          "label": "Supplementary material and code",
+          "datetime": "2026-07-31T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth (UTC-12)",
+          "original_text": "July 31, 2026 Supplementary material and code due by 11:59 PM UTC-12",
+          "evidence": "July 31, 2026 Supplementary material and code due by 11:59 PM UTC-12"
+        },
+        {
+          "type": "rejection_notification",
+          "label": "Phase 1 rejections notification",
+          "datetime": "2026-09-24T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth (UTC-12)",
+          "original_text": "September 24, 2026 Notification of Phase 1 rejections",
+          "evidence": "September 24, 2026 Notification of Phase 1 rejections"
+        },
+        {
+          "type": "notification",
+          "label": "Final notification (Main Technical Track)",
+          "datetime": "2026-11-30T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth (UTC-12)",
+          "original_text": "November 30, 2026 Notification of final acceptance or rejection (Main Technical Track)",
+          "evidence": "November 30, 2026 Notification of final acceptance or rejection (Main Technical Track)"
+        },
+        {
+          "type": "camera_ready",
+          "label": "Camera-ready submission",
+          "datetime": "2026-12-14T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "Anywhere on Earth (UTC-12)",
+          "original_text": "December 14, 2026 Submission of camera-ready files (Main Technical Track)",
+          "evidence": "December 14, 2026 Submission of camera-ready files (Main Technical Track)"
+        }
+      ],
+      "source": {
+        "url": "https://aaai.org/conference/aaai/aaai-27",
+        "type": "Official CFP",
+        "evidence": "Official AAAI-27 website providing main conference timetable for authors with final acceptance notifications on November 30, 2026 and camera-ready on December 14, 2026.",
+        "last_verified": "2026-09-29T23:50:19.908Z"
+      },
+      "relevance": {
+        "level": "high",
+        "label": "Strong match",
+        "matched_topics": [
+          "Deep Learning",
+          "Computer Vision",
+          "Explainable AI",
+          "Representation Learning"
+        ],
+        "reason": "AAAI is a flagship general AI conference spanning deep learning, representation learning, vision, and explainable AI, aligning directly with the candidate's core research background."
+      },
+      "discovered": true,
+      "updated": false
+    },
+    {
+      "id": "3dv-2027-14th-international-conference-on-3d-vision-2027-b3c316c8",
+      "title": "3DV 2027: 14th International Conference on 3D Vision",
+      "type": "conference",
+      "type_label": "Main conference",
+      "parent_event": null,
+      "year": 2027,
+      "organization": "3DV",
+      "location": {
+        "city": "Thessaloniki",
+        "country": "Greece",
+        "virtual": false
+      },
+      "topics": [
+        "3D computer vision",
+        "Geometry processing",
+        "Structure from motion and SLAM",
+        "Novel optical sensors",
+        "Applied perception",
+        "High-level representation of 3D data",
+        "Dense reconstruction and stereo",
+        "Shape representation and features"
+      ],
+      "publication": {
+        "archival": true,
+        "details": "Single-track oral and poster presentations"
+      },
+      "milestones": [
+        {
+          "type": "abstract_submission",
+          "label": "Abstract Registration",
+          "datetime": "2026-08-28T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "AoE (UTC-12)",
+          "original_text": "Abstract Registration Aug 28, 2026 (23:59 Anywhere on Earth (AoE))",
+          "evidence": "The Abstract Registration, Paper Submission and Supplementary Material deadlines are 23:59 Anywhere on Earth (AoE)."
+        },
+        {
+          "type": "paper_submission",
+          "label": "Paper Submission",
+          "datetime": "2026-08-28T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "AoE (UTC-12)",
+          "original_text": "Paper Submission Aug 28, 2026 (23:59 Anywhere on Earth (AoE))",
+          "evidence": "The Abstract Registration, Paper Submission and Supplementary Material deadlines are 23:59 Anywhere on Earth (AoE)."
+        },
+        {
+          "type": "supplementary_material",
+          "label": "Supplementary Material",
+          "datetime": "2026-09-02T23:59:00-12:00",
+          "timezone": "-12:00",
+          "timezone_label": "AoE (UTC-12)",
+          "original_text": "Supplementary Material Sep 02, 2026 (23:59 Anywhere on Earth (AoE))",
+          "evidence": "The Abstract Registration, Paper Submission and Supplementary Material deadlines are 23:59 Anywhere on Earth (AoE)."
+        },
+        {
+          "type": "preliminary_notification",
+          "label": "Preliminary Notification",
+          "datetime": "2026-10-27T11:00:00-07:00",
+          "timezone": "-07:00",
+          "timezone_label": "Pacific Time (PDT)",
+          "original_text": "Preliminary Notification Oct 27, 2026",
+          "evidence": "All other deadlines are 11:00 am Pacific Time (PDT). Preliminary Notification Oct 27, 2026."
+        },
+        {
+          "type": "notification",
+          "label": "Final Notification",
+          "datetime": "2026-12-02T11:00:00-08:00",
+          "timezone": "-08:00",
+          "timezone_label": "Pacific Time (PST)",
+          "original_text": "Final Notification Dec 02, 2026",
+          "evidence": "All other deadlines are 11:00 am Pacific Time (PDT/PST). Final Notification Dec 02, 2026."
+        }
+      ],
+      "source": {
+        "url": "https://3dvconf.github.io/2027/call-for-papers",
+        "type": "Official CFP",
+        "evidence": "Official 3DV 2027 Call for Papers listing conference dates in April 2027 and milestone deadlines including preliminary and final notifications in late 2026.",
+        "last_verified": "2026-09-29T23:50:19.908Z"
+      },
+      "relevance": {
+        "level": "high",
+        "label": "Strong match",
+        "matched_topics": [
+          "3D Perception",
+          "Computer Vision",
+          "LiDAR",
+          "Representation Learning"
+        ],
+        "reason": "Explicitly targets 3D vision, optical sensing, geometric representations, and 3D perception, which directly match the candidate's keywords (LiDAR, 3D perception) and research areas."
       },
       "discovered": true,
       "updated": false

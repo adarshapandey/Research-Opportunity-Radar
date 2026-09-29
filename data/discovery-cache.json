@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-09-28T16:05:06.367Z",
-  "updated_at": "2026-09-29T21:55:19.830Z",
+  "updated_at": "2026-09-29T23:50:34.993Z",
   "discovery": {
     "current_date": "2026-09-28",
     "query_log": [
@@ -966,18 +966,213 @@
         18,
         19
       ],
-      "status": "retry_pending",
-      "completed_at": null,
-      "opportunities": [],
-      "attempts": 17,
-      "last_attempt_at": "2026-09-29T21:55:19.757Z",
-      "last_error": {
-        "status": "retry_pending",
-        "http_status": 429,
-        "classification": "transient",
-        "message": "Gemini request failed (429): {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 40.181255074s.\",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.Help\",\n        \"links\": [\n          {\n            \"description\": \"Learn more about Gemini API quotas\",\n            \"url\": \"https://ai.google.dev/gemini-api/docs/rate-limits\"\n          }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.QuotaFailure\",\n        \"violations\": [\n          {\n            \"quotaMetric\": \"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\n            \"quotaId\": \"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\n            \"quotaDimensions\": {\n              \"location\": \"global\",\n              \"model\": \"gemini-3.8-flash\"\n            },\n            \"quotaValue\": \"20\"\n          }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.RetryInfo\",\n        \"retryDelay\": \"40s\"\n      }\n    ]\n  }\n}\n",
-        "failed_at": "2026-09-29T21:55:19.830Z"
-      }
+      "status": "completed",
+      "completed_at": "2026-09-29T23:50:19.908Z",
+      "opportunities": [
+        {
+          "id": "aaai-2027",
+          "title": "AAAI-27: The 41st Annual AAAI Conference on Artificial Intelligence",
+          "type": "conference",
+          "type_label": "Main conference",
+          "parent_event": null,
+          "year": 2027,
+          "organization": "Association for the Advancement of Artificial Intelligence",
+          "location": {
+            "city": "Montréal",
+            "country": "Canada",
+            "virtual": false
+          },
+          "topics": [
+            "Artificial Intelligence",
+            "Machine Learning",
+            "Deep Learning",
+            "Computer Vision",
+            "AI Alignment",
+            "AI for Social Impact"
+          ],
+          "publication": {
+            "archival": true,
+            "details": "Technical paper presentations and proceedings (Main Technical Track)"
+          },
+          "milestones": [
+            {
+              "type": "abstract_submission",
+              "label": "Abstract submission",
+              "datetime": "2026-07-21T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth (UTC-12)",
+              "original_text": "July 21, 2026 Abstracts due at 11:59 PM UTC-12",
+              "evidence": "July 21, 2026 Abstracts due at 11:59 PM UTC-12"
+            },
+            {
+              "type": "paper_submission",
+              "label": "Full paper submission",
+              "datetime": "2026-07-28T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth (UTC-12)",
+              "original_text": "July 28, 2026 Full papers due at 11:59 PM UTC-12",
+              "evidence": "July 28, 2026 Full papers due at 11:59 PM UTC-12"
+            },
+            {
+              "type": "supplementary_material",
+              "label": "Supplementary material and code",
+              "datetime": "2026-07-31T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth (UTC-12)",
+              "original_text": "July 31, 2026 Supplementary material and code due by 11:59 PM UTC-12",
+              "evidence": "July 31, 2026 Supplementary material and code due by 11:59 PM UTC-12"
+            },
+            {
+              "type": "rejection_notification",
+              "label": "Phase 1 rejections notification",
+              "datetime": "2026-09-24T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth (UTC-12)",
+              "original_text": "September 24, 2026 Notification of Phase 1 rejections",
+              "evidence": "September 24, 2026 Notification of Phase 1 rejections"
+            },
+            {
+              "type": "notification",
+              "label": "Final notification (Main Technical Track)",
+              "datetime": "2026-11-30T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth (UTC-12)",
+              "original_text": "November 30, 2026 Notification of final acceptance or rejection (Main Technical Track)",
+              "evidence": "November 30, 2026 Notification of final acceptance or rejection (Main Technical Track)"
+            },
+            {
+              "type": "camera_ready",
+              "label": "Camera-ready submission",
+              "datetime": "2026-12-14T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "Anywhere on Earth (UTC-12)",
+              "original_text": "December 14, 2026 Submission of camera-ready files (Main Technical Track)",
+              "evidence": "December 14, 2026 Submission of camera-ready files (Main Technical Track)"
+            }
+          ],
+          "source": {
+            "url": "https://aaai.org/conference/aaai/aaai-27",
+            "type": "Official CFP",
+            "evidence": "Official AAAI-27 website providing main conference timetable for authors with final acceptance notifications on November 30, 2026 and camera-ready on December 14, 2026."
+          },
+          "relevance": {
+            "level": "high",
+            "label": "Strong match",
+            "matched_topics": [
+              "Deep Learning",
+              "Computer Vision",
+              "Explainable AI",
+              "Representation Learning"
+            ],
+            "reason": "AAAI is a flagship general AI conference spanning deep learning, representation learning, vision, and explainable AI, aligning directly with the candidate's core research background."
+          }
+        },
+        {
+          "id": "3dv-2027",
+          "title": "3DV 2027: 14th International Conference on 3D Vision",
+          "type": "conference",
+          "type_label": "Main conference",
+          "parent_event": null,
+          "year": 2027,
+          "organization": "3DV",
+          "location": {
+            "city": "Thessaloniki",
+            "country": "Greece",
+            "virtual": false
+          },
+          "topics": [
+            "3D computer vision",
+            "Geometry processing",
+            "Structure from motion and SLAM",
+            "Novel optical sensors",
+            "Applied perception",
+            "High-level representation of 3D data",
+            "Dense reconstruction and stereo",
+            "Shape representation and features"
+          ],
+          "publication": {
+            "archival": true,
+            "details": "Single-track oral and poster presentations"
+          },
+          "milestones": [
+            {
+              "type": "abstract_submission",
+              "label": "Abstract Registration",
+              "datetime": "2026-08-28T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "AoE (UTC-12)",
+              "original_text": "Abstract Registration Aug 28, 2026 (23:59 Anywhere on Earth (AoE))",
+              "evidence": "The Abstract Registration, Paper Submission and Supplementary Material deadlines are 23:59 Anywhere on Earth (AoE)."
+            },
+            {
+              "type": "paper_submission",
+              "label": "Paper Submission",
+              "datetime": "2026-08-28T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "AoE (UTC-12)",
+              "original_text": "Paper Submission Aug 28, 2026 (23:59 Anywhere on Earth (AoE))",
+              "evidence": "The Abstract Registration, Paper Submission and Supplementary Material deadlines are 23:59 Anywhere on Earth (AoE)."
+            },
+            {
+              "type": "supplementary_material",
+              "label": "Supplementary Material",
+              "datetime": "2026-09-02T23:59:00-12:00",
+              "timezone": "-12:00",
+              "timezone_label": "AoE (UTC-12)",
+              "original_text": "Supplementary Material Sep 02, 2026 (23:59 Anywhere on Earth (AoE))",
+              "evidence": "The Abstract Registration, Paper Submission and Supplementary Material deadlines are 23:59 Anywhere on Earth (AoE)."
+            },
+            {
+              "type": "preliminary_notification",
+              "label": "Preliminary Notification",
+              "datetime": "2026-10-27T11:00:00-07:00",
+              "timezone": "-07:00",
+              "timezone_label": "Pacific Time (PDT)",
+              "original_text": "Preliminary Notification Oct 27, 2026",
+              "evidence": "All other deadlines are 11:00 am Pacific Time (PDT). Preliminary Notification Oct 27, 2026."
+            },
+            {
+              "type": "notification",
+              "label": "Final Notification",
+              "datetime": "2026-12-02T11:00:00-08:00",
+              "timezone": "-08:00",
+              "timezone_label": "Pacific Time (PST)",
+              "original_text": "Final Notification Dec 02, 2026",
+              "evidence": "All other deadlines are 11:00 am Pacific Time (PDT/PST). Final Notification Dec 02, 2026."
+            }
+          ],
+          "source": {
+            "url": "https://3dvconf.github.io/2027/call-for-papers",
+            "type": "Official CFP",
+            "evidence": "Official 3DV 2027 Call for Papers listing conference dates in April 2027 and milestone deadlines including preliminary and final notifications in late 2026."
+          },
+          "relevance": {
+            "level": "high",
+            "label": "Strong match",
+            "matched_topics": [
+              "3D Perception",
+              "Computer Vision",
+              "LiDAR",
+              "Representation Learning"
+            ],
+            "reason": "Explicitly targets 3D vision, optical sensing, geometric representations, and 3D perception, which directly match the candidate's keywords (LiDAR, 3D perception) and research areas."
+          }
+        }
+      ],
+      "attempts": 22,
+      "last_attempt_at": "2026-09-29T23:50:12.748Z",
+      "last_error": null,
+      "extracted_at": "2026-09-29T23:50:19.902Z",
+      "merged_at": "2026-09-29T23:50:19.908Z",
+      "merge_stats": {
+        "received": 2,
+        "accepted": 2,
+        "rejected": 0,
+        "duplicates": 0,
+        "newRecords": 2,
+        "updatedRecords": 0
+      },
+      "merge_validation_version": 2
     },
     {
       "index": 2,
@@ -993,20 +1188,29 @@
         28,
         29
       ],
-      "status": "pending",
+      "status": "retry_pending",
       "completed_at": null,
-      "opportunities": []
+      "opportunities": [],
+      "attempts": 5,
+      "last_attempt_at": "2026-09-29T23:50:34.873Z",
+      "last_error": {
+        "status": "retry_pending",
+        "http_status": 429,
+        "classification": "transient",
+        "message": "Gemini request failed (429): {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.8-flash\\nPlease retry in 25.031537074s.\",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.Help\",\n        \"links\": [\n          {\n            \"description\": \"Learn more about Gemini API quotas\",\n            \"url\": \"https://ai.google.dev/gemini-api/docs/rate-limits\"\n          }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.QuotaFailure\",\n        \"violations\": [\n          {\n            \"quotaMetric\": \"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\n            \"quotaId\": \"GenerateRequestsPerMinutePerProjectPerModel-FreeTier\",\n            \"quotaDimensions\": {\n              \"location\": \"global\",\n              \"model\": \"gemini-3.8-flash\"\n            },\n            \"quotaValue\": \"5\"\n          }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.RetryInfo\",\n        \"retryDelay\": \"25s\"\n      }\n    ]\n  }\n}\n",
+        "failed_at": "2026-09-29T23:50:34.993Z"
+      }
     }
   ],
   "state": {
     "status": "retry_pending",
-    "attempts": 21,
+    "attempts": 30,
     "last_error": {
       "status": "retry_pending",
       "http_status": 429,
       "classification": "transient",
-      "message": "Gemini request failed (429): {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 40.181255074s.\",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.Help\",\n        \"links\": [\n          {\n            \"description\": \"Learn more about Gemini API quotas\",\n            \"url\": \"https://ai.google.dev/gemini-api/docs/rate-limits\"\n          }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.QuotaFailure\",\n        \"violations\": [\n          {\n            \"quotaMetric\": \"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\n            \"quotaId\": \"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\n            \"quotaDimensions\": {\n              \"location\": \"global\",\n              \"model\": \"gemini-3.8-flash\"\n            },\n            \"quotaValue\": \"20\"\n          }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.RetryInfo\",\n        \"retryDelay\": \"40s\"\n      }\n    ]\n  }\n}\n",
-      "failed_at": "2026-09-29T21:55:19.830Z"
+      "message": "Gemini request failed (429): {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.8-flash\\nPlease retry in 25.031537074s.\",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.Help\",\n        \"links\": [\n          {\n            \"description\": \"Learn more about Gemini API quotas\",\n            \"url\": \"https://ai.google.dev/gemini-api/docs/rate-limits\"\n          }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.QuotaFailure\",\n        \"violations\": [\n          {\n            \"quotaMetric\": \"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\n            \"quotaId\": \"GenerateRequestsPerMinutePerProjectPerModel-FreeTier\",\n            \"quotaDimensions\": {\n              \"location\": \"global\",\n              \"model\": \"gemini-3.8-flash\"\n            },\n            \"quotaValue\": \"5\"\n          }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.RetryInfo\",\n        \"retryDelay\": \"25s\"\n      }\n    ]\n  }\n}\n",
+      "failed_at": "2026-09-29T23:50:34.993Z"
     }
   }
 }
