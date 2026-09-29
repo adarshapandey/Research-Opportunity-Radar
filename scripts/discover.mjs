@@ -107,13 +107,7 @@ async function mergeBatchIntoOpportunities({ batch, candidates, current, opportu
   return stats;
 }
 
-function cacheIsDue(cache, currentTime) {
-  if (!cache.state?.next_retry_at) return true;
-  const retryAt = Date.parse(cache.state.next_retry_at);
-  return Number.isNaN(retryAt) || currentTime.getTime() >= retryAt;
-}
-
-function failureState(error, currentTime, retryMinutes) {
+function failureState(error, currentTime) {
   const status = error instanceof GeminiApiError ? error.status : null;
   const permanent = status !== null && PERMANENT_GEMINI_STATUSES.has(status);
   const transient = status === null || TRANSIENT_GEMINI_STATUSES.has(status);
@@ -122,8 +116,7 @@ function failureState(error, currentTime, retryMinutes) {
     http_status: status,
     classification: permanent ? "permanent" : transient ? "transient" : "unclassified",
     message: error.message,
-    failed_at: currentTime.toISOString(),
-    next_retry_at: permanent ? null : new Date(currentTime.getTime() + retryMinutes * 60000).toISOString()
+    failed_at: currentTime.toISOString()
   };
 }
 
@@ -142,9 +135,8 @@ export async function runDiscovery({
   const current = await readJson(opportunitiesPath);
   if (!Array.isArray(current.opportunities)) throw new Error("data/opportunities.json does not contain an opportunities array.");
 
-  const retryMinutes = integerSetting(env, logger, "GEMINI_RETRY_INTERVAL_MINUTES", 15, 1, 1440);
+  const maxImmediateAttempts = integerSetting(env, logger, "GEMINI_MAX_IMMEDIATE_ATTEMPTS", 5, 1, 5);
   const forceBlockedRetry = enabled(env.FORCE_GEMINI_RETRY);
-  const recoveryOnly = enabled(env.RECOVERY_ONLY);
   let cache = await readCache(cachePath);
   let tavilyRequestsThisRun = 0;
   let geminiRequestsThisRun = 0;
@@ -154,7 +146,7 @@ export async function runDiscovery({
 
     // Older caches can contain completed Gemini output that was never merged,
     // or was rejected under an earlier validation implementation. Reconcile it
-    // once under the current rules before applying retry gates. This requires
+    // once under the current rules before applying blocked-state handling. This requires
     // no Gemini or Tavily request and remains idempotent through normal identity
     // matching in mergeOpportunities.
     for (const batch of cache.batches.filter(item =>
@@ -186,17 +178,8 @@ export async function runDiscovery({
       logger.error("Fix the configuration, then retry explicitly with FORCE_GEMINI_RETRY=true. The cache was preserved.");
       return { outcome: "blocked", tavilyRequests: 0, geminiRequests: 0 };
     }
-    if (!cacheIsDue(cache, now()) && !forceBlockedRetry) {
-      logger.log(`Gemini retry is not due until ${cache.state.next_retry_at}. Cache preserved; no API requests made.`);
-      return { outcome: "retry_wait", tavilyRequests: 0, geminiRequests: 0 };
-    }
   } else {
     logger.log("No pending discovery cache found.");
-    if (recoveryOnly) {
-      logger.log("Recovery-only invocation has no pending work. Skipping Tavily and Gemini.");
-      return { outcome: "no_pending_cache", tavilyRequests: 0, geminiRequests: 0 };
-    }
-
     const missingKeys = ["TAVILY_API_KEY", "GEMINI_API_KEY"].filter(name => !env[name]);
     if (missingKeys.length) {
       logger.log(`Dry run: ${current.opportunities.length} existing records loaded. Set ${missingKeys.join(" and ")} for live Tavily discovery and Gemini extraction.`);
@@ -291,7 +274,7 @@ export async function runDiscovery({
         merge_validation_version: null,
         opportunities: []
       })),
-      state: { status: "pending", attempts: 0, last_error: null, next_retry_at: null }
+      state: { status: "pending", attempts: 0, last_error: null }
     };
     logger.log("Persisting discovery cache before Gemini processing...");
     await writeJsonAtomic(cachePath, cache);
@@ -306,7 +289,7 @@ export async function runDiscovery({
     logger.log("Explicitly retrying previously blocked Gemini work.");
   }
   cache.state.status = "processing";
-  cache.state.next_retry_at = null;
+  delete cache.state.next_retry_at;
   cache.updated_at = now().toISOString();
   await writeJsonAtomic(cachePath, cache);
 
@@ -323,53 +306,65 @@ export async function runDiscovery({
 
     const candidates = batchCandidates(cache, batch);
     if (!batch.extracted_at) {
-      const attemptAt = now().toISOString();
-      batch.status = "processing";
-      batch.attempts = (batch.attempts || 0) + 1;
-      batch.last_attempt_at = attemptAt;
-      batch.last_error = null;
-      cache.updated_at = attemptAt;
-      await writeJsonAtomic(cachePath, cache);
+      for (let immediateAttempt = 1; immediateAttempt <= maxImmediateAttempts; immediateAttempt++) {
+        const attemptAt = now().toISOString();
+        batch.status = "processing";
+        batch.attempts = (batch.attempts || 0) + 1;
+        batch.last_attempt_at = attemptAt;
+        batch.last_error = null;
+        cache.state.status = "processing";
+        cache.state.last_error = null;
+        delete cache.state.next_retry_at;
+        cache.updated_at = attemptAt;
+        await writeJsonAtomic(cachePath, cache);
 
-      geminiRequestsThisRun++;
-      logger.log(`[Gemini ${batch.index + 1}/${cache.batches.length}] analyzing ${candidates.length} cached Tavily candidates.`);
-      try {
-        const result = await extract({
-          apiKey: env.GEMINI_API_KEY,
-          model: env.GEMINI_MODEL || "gemini-3.8-flash",
-          profile: cache.gemini_context?.profile || profile,
-          existing: cache.gemini_context?.existing_opportunities || current.opportunities,
-          candidates,
-          currentDate: cache.discovery.current_date
-        });
-        batch.opportunities = result.opportunities;
-        batch.extracted_at = now().toISOString();
-        batch.status = "extracted";
-        cache.updated_at = batch.extracted_at;
-        await writeJsonAtomic(cachePath, cache);
-        logger.log(`  Gemini returned ${result.opportunities.length} opportunity candidate(s); extracted output checkpoint persisted.`);
-      } catch (error) {
-        const failedAt = now();
-        const state = failureState(error, failedAt, retryMinutes);
-        batch.status = state.status === "blocked" ? "blocked" : "retry_pending";
-        batch.last_error = state;
-        cache.state = {
-          ...cache.state,
-          status: state.status,
-          attempts: (cache.state.attempts || 0) + 1,
-          last_error: state,
-          next_retry_at: state.next_retry_at
-        };
-        cache.updated_at = failedAt.toISOString();
-        await writeJsonAtomic(cachePath, cache);
-        const statusLabel = state.http_status ? `HTTP ${state.http_status}` : "an unclassified error";
-        logger.error(`Gemini processing failed with ${statusLabel}. Keeping discovery cache for recovery.`);
-        if (state.status === "retry_pending") {
-          logger.error(`No Tavily search will be performed on retry. Next eligible retry: ${state.next_retry_at}.`);
-        } else {
-          logger.error("This appears to be a permanent/configuration error. Automatic retries are blocked until an explicit retry is requested.");
+        geminiRequestsThisRun++;
+        logger.log(`[Gemini batch ${batch.index + 1}/${cache.batches.length}] attempt ${immediateAttempt}/${maxImmediateAttempts}: analyzing ${candidates.length} cached Tavily candidates.`);
+        try {
+          const result = await extract({
+            apiKey: env.GEMINI_API_KEY,
+            model: env.GEMINI_MODEL || "gemini-3.8-flash",
+            profile: cache.gemini_context?.profile || profile,
+            existing: cache.gemini_context?.existing_opportunities || current.opportunities,
+            candidates,
+            currentDate: cache.discovery.current_date
+          });
+          batch.opportunities = result.opportunities;
+          batch.extracted_at = now().toISOString();
+          batch.status = "extracted";
+          cache.updated_at = batch.extracted_at;
+          await writeJsonAtomic(cachePath, cache);
+          logger.log(`[Gemini batch ${batch.index + 1}/${cache.batches.length}] attempt ${immediateAttempt}/${maxImmediateAttempts} succeeded; ${result.opportunities.length} opportunity candidate(s) checkpointed.`);
+          break;
+        } catch (error) {
+          const failedAt = now();
+          const state = failureState(error, failedAt);
+          batch.status = state.status === "blocked" ? "blocked" : "retry_pending";
+          batch.last_error = state;
+          cache.state = {
+            ...cache.state,
+            status: state.status,
+            attempts: (cache.state.attempts || 0) + 1,
+            last_error: state
+          };
+          cache.updated_at = failedAt.toISOString();
+          await writeJsonAtomic(cachePath, cache);
+
+          const statusLabel = state.http_status ? `HTTP ${state.http_status}` : "an unclassified error";
+          logger.error(`[Gemini batch ${batch.index + 1}/${cache.batches.length}] attempt ${immediateAttempt}/${maxImmediateAttempts} failed with ${statusLabel}.`);
+          if (state.status === "blocked") {
+            logger.error("This appears to be a permanent/configuration error. Immediate retries are disabled until an explicit retry is requested.");
+            throw error;
+          }
+          if (immediateAttempt < maxImmediateAttempts) {
+            logger.warn("Retrying Gemini immediately; Tavily will not run again.");
+            continue;
+          }
+
+          logger.error("Maximum immediate Gemini attempts reached.");
+          logger.error("Preserving discovery cache for the next weekly discovery run; Tavily will not run again for this cycle.");
+          throw error;
         }
-        throw error;
       }
     } else {
       logger.log(`[Gemini ${batch.index + 1}/${cache.batches.length}] extracted checkpoint found; skipping Gemini request and resuming merge.`);

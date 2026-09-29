@@ -191,6 +191,7 @@ async function cacheAt(root) {
 test("normal run caches Tavily results before Gemini, writes opportunities, then deletes cache", async () => {
   const root = await temporaryWorkspace();
   let tavilyCalls = 0;
+  let geminiCalls = 0;
   let sawCacheDuringGemini = false;
   const result = await runDiscovery({
     root,
@@ -198,6 +199,7 @@ test("normal run caches Tavily results before Gemini, writes opportunities, then
     now: () => new Date("2026-09-27T12:00:00Z"),
     search: async () => { tavilyCalls++; return tavilyResponse(1); },
     extract: async ({ candidates }) => {
+      geminiCalls++;
       await access(join(root, "data/discovery-cache.json"));
       sawCacheDuringGemini = true;
       return { opportunities: [extractedOpportunity(candidates[0], 0)] };
@@ -207,6 +209,8 @@ test("normal run caches Tavily results before Gemini, writes opportunities, then
 
   assert.equal(result.outcome, "completed");
   assert.equal(tavilyCalls, 1);
+  assert.equal(geminiCalls, 1);
+  assert.equal(result.geminiRequests, 1);
   assert.equal(sawCacheDuringGemini, true);
   await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
   const output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
@@ -301,226 +305,196 @@ test("completed output rejected by older timezone validation is revalidated with
   await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
 });
 
-test("Gemini 503 keeps the cache and recovery skips Tavily", async () => {
+test("transient Gemini failures retry immediately and succeed on attempt three", async () => {
   const root = await temporaryWorkspace();
-  let currentTime = new Date("2026-09-27T12:00:00Z");
-  let tavilyCalls = 0;
-  const search = async () => { tavilyCalls++; return tavilyResponse(1); };
-  await assert.rejects(runDiscovery({
-    root,
-    env: { TAVILY_API_KEY: "test", GEMINI_API_KEY: "test", TAVILY_MAX_QUERIES: "1" },
-    now: () => currentTime,
-    search,
-    extract: async () => { throw new GeminiApiError(503, "temporarily unavailable"); },
-    logger: quietLogger
-  }), /503/);
-
-  const failedCache = await cacheAt(root);
-  assert.equal(failedCache.state.status, "retry_pending");
-  assert.equal(tavilyCalls, 1);
-  const unchanged = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
-  assert.equal(unchanged.opportunities.length, 0);
-
-  currentTime = new Date("2026-09-27T12:10:00Z");
-  let earlyGeminiCalls = 0;
-  const waiting = await runDiscovery({
-    root,
-    env: { GEMINI_API_KEY: "test" },
-    now: () => currentTime,
-    search,
-    extract: async () => { earlyGeminiCalls++; return { opportunities: [] }; },
-    logger: quietLogger
-  });
-  assert.equal(waiting.outcome, "retry_wait");
-  assert.equal(earlyGeminiCalls, 0);
-  assert.equal(tavilyCalls, 1);
-
-  currentTime = new Date("2026-09-27T12:16:00Z");
-  const recovered = await runDiscovery({
-    root,
-    env: { GEMINI_API_KEY: "test" },
-    now: () => currentTime,
-    search,
-    extract: async ({ candidates }) => ({ opportunities: [extractedOpportunity(candidates[0], 0)] }),
-    logger: quietLogger
-  });
-  assert.equal(recovered.outcome, "completed");
-  assert.equal(recovered.tavilyRequests, 0);
-  assert.equal(tavilyCalls, 1);
-  await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
-});
-
-test("successful batches merge incrementally while later failures remain recoverable", async () => {
-  const root = await temporaryWorkspace();
-  let currentTime = new Date("2026-09-27T12:00:00Z");
   let tavilyCalls = 0;
   let geminiCalls = 0;
-  const requestedUrls = [];
-
-  // Batch 1 succeeds and is merged; batch 2 fails; batch 3 is not attempted.
-  await assert.rejects(runDiscovery({
+  const messages = [];
+  const logger = {
+    log(message) { messages.push(message); },
+    warn(message) { messages.push(message); },
+    error(message) { messages.push(message); }
+  };
+  const result = await runDiscovery({
     root,
-    env: {
-      TAVILY_API_KEY: "test",
-      GEMINI_API_KEY: "test",
-      TAVILY_MAX_QUERIES: "1",
-      GEMINI_BATCH_SIZE: "1"
-    },
-    now: () => currentTime,
-    search: async () => { tavilyCalls++; return tavilyResponse(3); },
+    env: { TAVILY_API_KEY: "test", GEMINI_API_KEY: "test", TAVILY_MAX_QUERIES: "1" },
+    now: () => new Date("2026-09-27T12:00:00Z"),
+    search: async () => { tavilyCalls++; return tavilyResponse(1); },
     extract: async ({ candidates }) => {
-      requestedUrls.push(candidates[0].url);
       geminiCalls++;
-      if (geminiCalls === 2) throw new GeminiApiError(503, "second batch unavailable");
+      if (geminiCalls < 3) throw new GeminiApiError(503, "temporarily unavailable");
       return { opportunities: [extractedOpportunity(candidates[0], 0)] };
     },
-    logger: quietLogger
-  }), /503/);
-
-  let checkpoint = await cacheAt(root);
-  assert.deepEqual(checkpoint.batches.map(batch => batch.status), ["completed", "retry_pending", "pending"]);
-  assert.ok(checkpoint.batches[0].merged_at);
-  assert.equal(checkpoint.batches[1].last_error.http_status, 503);
-  let output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
-  assert.deepEqual(output.opportunities.map(item => item.title), ["Official Test Workshop 1"]);
-  assert.equal(tavilyCalls, 1);
-
-  // Before next_retry_at there are no API calls and no data mutation.
-  const beforeEarlyRetry = await readFile(join(root, "data/opportunities.json"), "utf8");
-  currentTime = new Date("2026-09-27T12:10:00Z");
-  const waiting = await runDiscovery({
-    root,
-    env: { GEMINI_API_KEY: "test" },
-    now: () => currentTime,
-    search: async () => { tavilyCalls++; return tavilyResponse(3); },
-    extract: async () => { geminiCalls++; return { opportunities: [] }; },
-    logger: quietLogger
-  });
-  assert.equal(waiting.outcome, "retry_wait");
-  assert.equal(geminiCalls, 2);
-  assert.equal(await readFile(join(root, "data/opportunities.json"), "utf8"), beforeEarlyRetry);
-
-  // Recovery skips batch 1, merges batch 2, then batch 3 fails.
-  currentTime = new Date("2026-09-27T12:16:00Z");
-  await assert.rejects(runDiscovery({
-    root,
-    env: { GEMINI_API_KEY: "test" },
-    now: () => currentTime,
-    search: async () => { tavilyCalls++; return tavilyResponse(3); },
-    extract: async ({ candidates }) => {
-      requestedUrls.push(candidates[0].url);
-      geminiCalls++;
-      if (candidates[0].url.endsWith("workshop-3")) throw new GeminiApiError(503, "third batch unavailable");
-      return { opportunities: [extractedOpportunity(candidates[0], 1)] };
-    },
-    logger: quietLogger
-  }), /503/);
-
-  checkpoint = await cacheAt(root);
-  assert.deepEqual(checkpoint.batches.map(batch => batch.status), ["completed", "completed", "retry_pending"]);
-  output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
-  assert.deepEqual(output.opportunities.map(item => item.title), ["Official Test Workshop 1", "Official Test Workshop 2"]);
-  assert.equal(output.opportunities.filter(item => item.title === "Official Test Workshop 1").length, 1);
-  assert.equal(tavilyCalls, 1);
-
-  // Final recovery processes only batch 3 and removes the cache after merge.
-  currentTime = new Date("2026-09-27T12:32:00Z");
-  const recovered = await runDiscovery({
-    root,
-    env: { GEMINI_API_KEY: "test" },
-    now: () => currentTime,
-    search: async () => { tavilyCalls++; return tavilyResponse(3); },
-    extract: async ({ candidates }) => {
-      requestedUrls.push(candidates[0].url);
-      geminiCalls++;
-      return { opportunities: [extractedOpportunity(candidates[0], 2)] };
-    },
-    logger: quietLogger
+    logger
   });
 
-  assert.equal(recovered.outcome, "completed");
-  assert.equal(recovered.tavilyRequests, 0);
+  assert.equal(result.outcome, "completed");
+  assert.equal(result.geminiRequests, 3);
+  assert.equal(geminiCalls, 3);
   assert.equal(tavilyCalls, 1);
-  assert.deepEqual(requestedUrls, [
-    "https://events.example.org/workshop-1",
-    "https://events.example.org/workshop-2",
-    "https://events.example.org/workshop-2",
-    "https://events.example.org/workshop-3",
-    "https://events.example.org/workshop-3"
-  ]);
-  output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
-  assert.equal(output.opportunities.length, 3);
-  assert.equal(new Set(output.opportunities.map(item => item.id)).size, 3);
+  assert.ok(messages.some(message => message.includes("attempt 1/5")));
+  assert.ok(messages.some(message => message.includes("failed with HTTP 503")));
+  assert.ok(messages.some(message => message.includes("Retrying Gemini immediately")));
+  assert.ok(messages.some(message => message.includes("attempt 3/5 succeeded")));
   await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
 });
 
-test("persistent transient Gemini failures never rerun Tavily or corrupt opportunities", async () => {
+test("five transient failures stop the run and preserve completed checkpoints without rerunning Tavily", async () => {
   const root = await temporaryWorkspace();
-  let currentTime = new Date("2026-09-27T12:00:00Z");
+  const candidates = tavilyResponse(2).results;
+  await writeFile(join(root, "data/discovery-cache.json"), `${JSON.stringify({
+    version: 1,
+    created_at: "2026-09-27T11:00:00Z",
+    updated_at: "2026-09-27T11:05:00Z",
+    discovery: { current_date: "2026-09-27", query_log: [], tavily_summary: {}, configuration: { geminiBatchSize: 1 } },
+    gemini_context: { profile, existing_opportunities: [] },
+    candidates,
+    batches: [
+      {
+        index: 0,
+        candidate_indexes: [0],
+        status: "completed",
+        attempts: 1,
+        completed_at: "2026-09-27T11:04:00Z",
+        merged_at: "2026-09-27T11:04:00Z",
+        merge_stats: { received: 0, accepted: 0, rejected: 0, duplicates: 0, newRecords: 0, updatedRecords: 0 },
+        merge_validation_version: 2,
+        opportunities: []
+      },
+      {
+        index: 1,
+        candidate_indexes: [1],
+        status: "pending",
+        attempts: 0,
+        extracted_at: null,
+        completed_at: null,
+        merged_at: null,
+        opportunities: []
+      }
+    ],
+    state: { status: "pending", attempts: 0, last_error: null }
+  }, null, 2)}\n`);
+
   let tavilyCalls = 0;
-  const search = async () => { tavilyCalls++; return tavilyResponse(1); };
-  const failingGemini = async () => { throw new GeminiApiError(429, "quota exhausted"); };
-
-  await assert.rejects(runDiscovery({
-    root,
-    env: { TAVILY_API_KEY: "test", GEMINI_API_KEY: "test", TAVILY_MAX_QUERIES: "1" },
-    now: () => currentTime,
-    search,
-    extract: failingGemini,
-    logger: quietLogger
-  }), /429/);
-  const originalFile = await readFile(join(root, "data/opportunities.json"), "utf8");
-
-  currentTime = new Date("2026-09-27T12:16:00Z");
+  let geminiCalls = 0;
+  const messages = [];
   await assert.rejects(runDiscovery({
     root,
     env: { GEMINI_API_KEY: "test" },
-    now: () => currentTime,
-    search,
-    extract: failingGemini,
-    logger: quietLogger
-  }), /429/);
+    now: () => new Date("2026-09-27T12:00:00Z"),
+    search: async () => { tavilyCalls++; return tavilyResponse(1); },
+    extract: async () => {
+      geminiCalls++;
+      throw new GeminiApiError(503, "temporarily unavailable");
+    },
+    logger: {
+      log(message) { messages.push(message); },
+      warn(message) { messages.push(message); },
+      error(message) { messages.push(message); }
+    }
+  }), /503/);
 
-  assert.equal(tavilyCalls, 1);
-  assert.equal(await readFile(join(root, "data/opportunities.json"), "utf8"), originalFile);
-  const cache = await cacheAt(root);
-  assert.equal(cache.state.status, "retry_pending");
-  assert.equal(cache.state.attempts, 2);
+  assert.equal(geminiCalls, 5);
+  assert.equal(tavilyCalls, 0);
+  const checkpoint = await cacheAt(root);
+  assert.deepEqual(checkpoint.batches.map(batch => batch.status), ["completed", "retry_pending"]);
+  assert.equal(checkpoint.batches[0].attempts, 1);
+  assert.equal(checkpoint.batches[1].attempts, 5);
+  assert.equal(checkpoint.state.attempts, 5);
+  assert.equal(checkpoint.state.status, "retry_pending");
+  assert.equal("next_retry_at" in checkpoint.state, false);
+  assert.ok(messages.some(message => message.includes("attempt 5/5 failed with HTTP 503")));
+  assert.ok(messages.includes("Maximum immediate Gemini attempts reached."));
+  assert.ok(messages.some(message => message.includes("next weekly discovery run")));
 });
 
-test("permanent Gemini errors block automatic retries but allow an explicit cached retry", async () => {
+test("permanent Gemini errors make one request and preserve blocked-cache behavior", async () => {
   const root = await temporaryWorkspace();
   let tavilyCalls = 0;
+  let geminiCalls = 0;
   await assert.rejects(runDiscovery({
     root,
     env: { TAVILY_API_KEY: "test", GEMINI_API_KEY: "test", TAVILY_MAX_QUERIES: "1" },
     now: () => new Date("2026-09-27T12:00:00Z"),
     search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async () => { throw new GeminiApiError(404, "model not found"); },
+    extract: async () => {
+      geminiCalls++;
+      throw new GeminiApiError(401, "invalid API key");
+    },
     logger: quietLogger
-  }), /404/);
+  }), /401/);
 
+  assert.equal(geminiCalls, 1);
+  assert.equal(tavilyCalls, 1);
   assert.equal((await cacheAt(root)).state.status, "blocked");
-  let automaticGeminiCalls = 0;
+
   const blocked = await runDiscovery({
     root,
     env: { GEMINI_API_KEY: "test" },
     now: () => new Date("2026-09-27T12:30:00Z"),
     search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async () => { automaticGeminiCalls++; return { opportunities: [] }; },
+    extract: async () => { geminiCalls++; return { opportunities: [] }; },
     logger: quietLogger
   });
   assert.equal(blocked.outcome, "blocked");
-  assert.equal(automaticGeminiCalls, 0);
+  assert.equal(geminiCalls, 1);
+  assert.equal(tavilyCalls, 1);
+});
 
-  const forced = await runDiscovery({
+test("completed cached batches are skipped while an unfinished batch gets immediate retry behavior", async () => {
+  const root = await temporaryWorkspace();
+  const candidates = tavilyResponse(2).results;
+  await writeFile(join(root, "data/discovery-cache.json"), `${JSON.stringify({
+    version: 1,
+    created_at: "2026-09-27T11:00:00Z",
+    updated_at: "2026-09-27T11:05:00Z",
+    discovery: { current_date: "2026-09-27", query_log: [], tavily_summary: {}, configuration: { geminiBatchSize: 1 } },
+    gemini_context: { profile, existing_opportunities: [] },
+    candidates,
+    batches: [
+      {
+        index: 0,
+        candidate_indexes: [0],
+        status: "completed",
+        attempts: 1,
+        completed_at: "2026-09-27T11:04:00Z",
+        merged_at: "2026-09-27T11:04:00Z",
+        merge_stats: { received: 0, accepted: 0, rejected: 0, duplicates: 0, newRecords: 0, updatedRecords: 0 },
+        merge_validation_version: 2,
+        opportunities: []
+      },
+      {
+        index: 1,
+        candidate_indexes: [1],
+        status: "retry_pending",
+        attempts: 5,
+        extracted_at: null,
+        completed_at: null,
+        merged_at: null,
+        opportunities: []
+      }
+    ],
+    state: { status: "retry_pending", attempts: 5, last_error: { http_status: 503 } }
+  }, null, 2)}\n`);
+
+  let geminiCalls = 0;
+  const requestedUrls = [];
+  const result = await runDiscovery({
     root,
-    env: { GEMINI_API_KEY: "test", FORCE_GEMINI_RETRY: "true" },
-    now: () => new Date("2026-09-27T12:31:00Z"),
-    search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async ({ candidates }) => ({ opportunities: [extractedOpportunity(candidates[0], 0)] }),
+    env: { GEMINI_API_KEY: "test" },
+    now: () => new Date("2026-10-04T12:00:00Z"),
+    search: async () => { throw new Error("Tavily must not run during cached recovery"); },
+    extract: async ({ candidates: batchCandidates }) => {
+      geminiCalls++;
+      requestedUrls.push(batchCandidates[0].url);
+      return { opportunities: [extractedOpportunity(batchCandidates[0], 1)] };
+    },
     logger: quietLogger
   });
-  assert.equal(forced.outcome, "completed");
-  assert.equal(tavilyCalls, 1);
+
+  assert.equal(result.outcome, "completed");
+  assert.equal(result.tavilyRequests, 0);
+  assert.equal(geminiCalls, 1);
+  assert.deepEqual(requestedUrls, ["https://events.example.org/workshop-2"]);
+  await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
 });

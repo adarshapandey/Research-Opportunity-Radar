@@ -10,7 +10,6 @@ on:
         type: boolean
   schedule:
     - cron: "0 1 * * 2"
-    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
@@ -36,8 +35,7 @@ jobs:
           TAVILY_RESULTS_PER_QUERY: 5
           TAVILY_MAX_CANDIDATES: 30
           GEMINI_BATCH_SIZE: 10
-          GEMINI_RETRY_INTERVAL_MINUTES: 5
-          RECOVERY_ONLY: ${{ github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *' }}
+          GEMINI_MAX_IMMEDIATE_ATTEMPTS: 5
           FORCE_GEMINI_RETRY: ${{ github.event.inputs.force_gemini_retry || 'false' }}
         run: node scripts/discover.mjs
       - name: Commit verified data changes

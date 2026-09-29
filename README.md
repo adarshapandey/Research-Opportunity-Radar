@@ -36,9 +36,9 @@ Open `http://localhost:4173`. No install step is required.
 
 Tavily Search returns ranked URLs, snippets, and cleaned page content. Gemini receives only that material and has no web-search tool. Returned records are rejected unless their source URL came from Tavily, their milestones have parseable datetimes with explicit offsets and valid timezone values, and source evidence and a supported relevance label are present. Paper-deadline changes are detected before merging.
 
-The default budget is ten basic Tavily searches per discovery cycle, five results per search, at most thirty unique candidate URLs, and Gemini batches of ten. This means at most three Gemini calls for a new cycle. Tavily results are written to `data/discovery-cache.json` before the first Gemini request. Each successful Gemini batch is immediately validated and merged into `data/opportunities.json`, then marked completed in the cache.
+The default budget is ten basic Tavily searches per discovery cycle, five results per search, at most thirty unique candidate URLs, and Gemini batches of ten. This means at most three Gemini batches for a new cycle, with up to five immediate requests per batch when retryable failures occur. Tavily results are written to `data/discovery-cache.json` before the first Gemini request. Each successful Gemini batch is immediately validated and merged into `data/opportunities.json`, then marked completed in the cache.
 
-If Gemini returns 429, 500, 502, 503, or 504, the cache remains and records the next eligible retry time. A later recovery invocation skips Tavily and resumes only unfinished Gemini batches. HTTP 400, 401, 403, and 404 mark the cache as blocked so the recovery schedule does not retry a permanent/configuration problem forever. After fixing the configuration, use the manual workflow's **force Gemini retry** option or set `FORCE_GEMINI_RETRY=true` locally. There is no Gemini health-check request.
+If Gemini returns a retryable error, including 429, 500, 502, 503, or 504, the current batch is retried immediately up to five total attempts in the same process. There is no sleep between attempts and Tavily is not called again. If all five attempts fail, the cache remains for the next weekly discovery run, which skips Tavily and resumes only unfinished Gemini batches. HTTP 400, 401, 403, and 404 stop after one request and mark the cache as blocked. After fixing the configuration, use the manual workflow's **force Gemini retry** option or set `FORCE_GEMINI_RETRY=true` locally. There is no Gemini health-check request.
 
 The workflow commits cache creation, incremental opportunity updates, and checkpoints even when a later Gemini batch exits with an API error. Earlier successful batches remain visible and are not rolled back. The cache is deleted only after every Gemini batch has completed and its merge has been persisted successfully.
 
@@ -58,8 +58,7 @@ Environment variables are supplied by the shell locally and by GitHub Actions se
 | `TAVILY_MAX_CANDIDATES` | `30` | Unique candidate URLs retained for Gemini. |
 | `TAVILY_MAX_CONTENT_CHARS` | `6000` | Maximum source characters retained per URL. |
 | `GEMINI_BATCH_SIZE` | `10` | Candidate sources sent per Gemini call. |
-| `GEMINI_RETRY_INTERVAL_MINUTES` | `15` | Minimum delay before retrying transient cached Gemini work. |
-| `RECOVERY_ONLY` | false | Skip all work when no cache exists; used by the frequent recovery schedule. |
+| `GEMINI_MAX_IMMEDIATE_ATTEMPTS` | `5` | Total Gemini attempts per unfinished batch in one invocation, hard-capped by code at 5. |
 | `FORCE_GEMINI_RETRY` | false | Explicitly retry cached work blocked by a permanent/configuration error. |
 
 With Tavily's current one-credit basic-search pricing, the default scheduled configuration uses at most ten credits per run. The repository never opts into pay-as-you-go or automatically falls back to a paid provider; plan enforcement remains the responsibility of the Tavily and Gemini accounts.
@@ -80,4 +79,4 @@ npm test            # dependency-free discovery/merge tests
 npm run discover    # dry run without both keys; live with both API keys
 ```
 
-If a pending cache exists, `npm run discover` needs only `GEMINI_API_KEY`; it skips Tavily automatically. Before `next_retry_at`, it exits without making an API request.
+If a pending cache exists, `npm run discover` needs only `GEMINI_API_KEY`; it skips Tavily automatically and resumes unfinished Gemini batches.
