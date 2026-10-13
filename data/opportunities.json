@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-29T23:50:19.908Z",
+  "generated_at": "2026-10-13T07:28:42.257Z",
   "data_mode": "live",
   "opportunities": [
     {
@@ -10,59 +10,62 @@
       "year": 2027,
       "organization": "International Conference on Learning Representations",
       "location": {
-        "city": "Rio de Janeiro",
-        "country": "Brazil",
+        "city": "San Francisco",
+        "country": "United States",
         "virtual": false
       },
       "topics": [
-        "representation learning",
-        "deep learning",
-        "foundation models"
+        "Representation Learning",
+        "Deep Learning",
+        "Unsupervised, Semi-supervised, and Supervised Representation Learning",
+        "Optimization for Representation Learning",
+        "Applications in Vision, Audio, Speech, Natural Language Processing, Robotics"
       ],
       "milestones": [
         {
           "type": "abstract_submission",
           "label": "Abstract submission",
-          "datetime": "2026-09-28T23:59:00-12:00",
-          "timezone": "UTC-12",
+          "datetime": "2026-09-18T23:59:00-12:00",
+          "timezone": "-12:00",
           "timezone_label": "Anywhere on Earth",
-          "original_text": "September 28, 2026, 11:59 PM AoE"
+          "original_text": "Abstract Deadline Sep 18 '26 (Anywhere on Earth)",
+          "evidence": "Abstract Deadline Sep 18 '26 (Anywhere on Earth)"
         },
         {
           "type": "paper_submission",
           "label": "Paper submission",
-          "datetime": "2026-10-01T23:59:00-12:00",
-          "timezone": "UTC-12",
+          "datetime": "2026-09-25T23:59:00-12:00",
+          "timezone": "-12:00",
           "timezone_label": "Anywhere on Earth",
-          "original_text": "October 1, 2026, 11:59 PM AoE"
-        },
-        {
-          "type": "notification",
-          "label": "Decision notification",
-          "datetime": "2027-01-25T23:59:00-12:00",
-          "timezone": "UTC-12",
-          "timezone_label": "Anywhere on Earth",
-          "original_text": "January 25, 2027"
+          "original_text": "Paper Deadline Sep 25 '26 (Anywhere on Earth)",
+          "evidence": "Paper Deadline Sep 25 '26 (Anywhere on Earth)"
         }
       ],
       "source": {
-        "url": "https://iclr.cc/",
-        "type": "Official conference site",
-        "last_verified": "2026-09-27T08:00:00Z",
-        "evidence": "Demonstration record. Replace through the discovery workflow before relying on this date."
+        "url": "https://iclr.cc",
+        "type": "Official event site",
+        "evidence": "Official ICLR 2027 website listing venue (Moscone Center, San Francisco, CA), conference dates (April 26-30, 2027), and important submission deadlines in AoE.",
+        "last_verified": "2026-10-13T07:28:42.257Z"
       },
       "relevance": {
         "level": "high",
         "label": "Strong match",
         "matched_topics": [
-          "representation learning",
-          "deep learning",
-          "foundation models"
+          "Deep Learning",
+          "Representation Learning",
+          "Foundation Models",
+          "Computer Vision"
         ],
-        "reason": "Strong overlap with your work in representation learning, foundation models, and stochastic deep learning."
+        "reason": "ICLR is the flagship venue for representation learning and deep learning, matching Adarsha's primary research areas in foundational representation learning, deep architectures, and computer vision."
       },
       "discovered": false,
-      "updated": false
+      "updated": true,
+      "parent_event": null,
+      "publication": {
+        "archival": true,
+        "details": "Proceedings at OpenReview"
+      },
+      "change_note": "Paper deadline changed from 2026-10-01T23:59:00-12:00 to 2026-09-25T23:59:00-12:00."
     },
     {
       "id": "cvpr-2027",
