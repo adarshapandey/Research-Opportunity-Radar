@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-13T07:28:42.257Z",
+  "generated_at": "2026-10-20T05:50:56.795Z",
   "data_mode": "live",
   "opportunities": [
     {
@@ -375,86 +375,88 @@
       "topics": [
         "Machine learning methods and algorithms",
         "Probabilistic methods",
-        "Theory of machine learning and statistics",
-        "Optimization"
+        "Bayesian methods",
+        "Approximate inference",
+        "Artificial Intelligence",
+        "Statistics"
       ],
       "publication": {
         "archival": true,
-        "details": "Accepted papers will be published in the AISTATS Conference Proceedings as part of the Journal of Machine Learning Research Workshop and Conference Proceedings series by Proceedings of Machine Learning Research (PMLR)."
+        "details": "Proceedings of Machine Learning Research (PMLR)"
       },
       "milestones": [
         {
           "type": "abstract_submission",
-          "label": "Abstract submission deadline",
+          "label": "Abstract submission",
           "datetime": "2026-09-29T23:59:00-12:00",
-          "timezone": "-12:00",
+          "timezone": "UTC-12",
           "timezone_label": "Anywhere on Earth",
-          "original_text": "Abstract submission deadline: Tuesday, September 29, 2026",
-          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Abstract submission deadline | Tuesday, September 29, 2026 |"
+          "original_text": "Tuesday, September 29, 2026",
+          "evidence": "Abstract submission deadline | Tuesday, September 29, 2026 | All deadlines are at 23:59 Anywhere on Earth (AoE)."
         },
         {
           "type": "paper_submission",
-          "label": "Full paper submission deadline",
+          "label": "Full paper submission",
           "datetime": "2026-10-06T23:59:00-12:00",
-          "timezone": "-12:00",
+          "timezone": "UTC-12",
           "timezone_label": "Anywhere on Earth",
-          "original_text": "Full paper submission deadline (including all supplementary material): Tuesday, October 6, 2026",
-          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Full paper submission deadline (including all supplementary material) | Tuesday, October 6, 2026 |"
+          "original_text": "Tuesday, October 6, 2026",
+          "evidence": "Full paper submission deadline (including all supplementary material) | Tuesday, October 6, 2026"
         },
         {
           "type": "workshop_proposal",
           "label": "Workshop submission deadline",
-          "datetime": "2026-10-20T23:59:00-12:00",
-          "timezone": "-12:00",
+          "datetime": "2026-10-30T23:59:00-12:00",
+          "timezone": "UTC-12",
           "timezone_label": "Anywhere on Earth",
-          "original_text": "Workshop submission deadline: Tuesday, October 20, 2026",
-          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Workshop submission deadline | Tuesday, October 20, 2026 |"
+          "original_text": "Tuesday, October 30, 2026",
+          "evidence": "Workshop submission deadline | Tuesday, October 30, 2026; *Update September 30, 2026:*modification of the workshop submission deadline."
         },
         {
           "type": "rebuttal",
-          "label": "Reviews released and author rebuttal begins",
+          "label": "Author rebuttal period begins",
           "datetime": "2026-11-16T23:59:00-12:00",
-          "timezone": "-12:00",
+          "timezone": "UTC-12",
           "timezone_label": "Anywhere on Earth",
-          "original_text": "Reviews and AI review released to authors; author rebuttal period begins: Monday, November 16, 2026",
-          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Reviews and AI review released to authors; author rebuttal period begins | Monday, November 16, 2026 |"
+          "original_text": "Monday, November 16, 2026",
+          "evidence": "Reviews and AI review released to authors; author rebuttal period begins | Monday, November 16, 2026"
         },
         {
           "type": "discussion",
-          "label": "Author–reviewer discussion period closes",
+          "label": "Author–reviewer discussion period ends",
           "datetime": "2026-12-03T23:59:00-12:00",
-          "timezone": "-12:00",
+          "timezone": "UTC-12",
           "timezone_label": "Anywhere on Earth",
-          "original_text": "Author–reviewer discussion period: Monday, November 23 – Thursday, December 3, 2026",
-          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Author–reviewer discussion period | Monday, November 23 – Thursday, December 3, 2026 |"
+          "original_text": "Thursday, December 3, 2026",
+          "evidence": "Author–reviewer discussion period | Monday, November 23 – Thursday, December 3, 2026"
         },
         {
           "type": "notification",
           "label": "Paper decision notifications",
           "datetime": "2027-01-20T23:59:00-12:00",
-          "timezone": "-12:00",
+          "timezone": "UTC-12",
           "timezone_label": "Anywhere on Earth",
-          "original_text": "Paper decision notifications: Wednesday, January 20, 2027",
-          "evidence": "All deadlines are at 23:59 Anywhere on Earth (AoE). | Paper decision notifications | Wednesday, January 20, 2027 |"
+          "original_text": "Wednesday, January 20, 2027",
+          "evidence": "Paper decision notifications | Wednesday, January 20, 2027"
         }
       ],
       "source": {
         "url": "https://virtual.aistats.org/Conferences/2027/CallForPapers",
         "type": "Official CFP",
-        "evidence": "Official Call for Papers page on virtual.aistats.org detailing deadlines, policy updates, and scope for AISTATS 2027.",
-        "last_verified": "2026-09-28T23:47:51.740Z"
+        "evidence": "Official AISTATS 2027 Call for Papers updating key dates, specifically the workshop submission deadline to October 30, 2026 AoE.",
+        "last_verified": "2026-10-20T05:47:32.750Z"
       },
       "relevance": {
         "level": "high",
         "label": "Strong match",
         "matched_topics": [
-          "Stochastic Deep Learning",
           "Deep Learning",
+          "Stochastic Deep Learning",
           "Representation Learning"
         ],
-        "reason": "AISTATS focuses centrally on machine learning algorithms, probabilistic methods, approximate inference, and optimization. This provides a direct methodological fit for the candidate's core research in stochastic deep learning, uncertainty estimation, and stochastic optimization."
+        "reason": "AISTATS centers on the intersection of machine learning, probabilistic methods, and statistics, strongly matching the profile's research in stochastic deep learning, uncertainty estimation, and stochastic optimization."
       },
-      "discovered": true,
+      "discovered": false,
       "updated": false
     },
     {
@@ -648,6 +650,157 @@
           "Representation Learning"
         ],
         "reason": "Explicitly targets 3D vision, optical sensing, geometric representations, and 3D perception, which directly match the candidate's keywords (LiDAR, 3D perception) and research areas."
+      },
+      "discovered": true,
+      "updated": false
+    },
+    {
+      "id": "15th-computing-conference-2027-6eeaca8a",
+      "title": "15th Computing Conference 2027",
+      "type": "conference",
+      "type_label": "Main conference",
+      "parent_event": null,
+      "year": 2027,
+      "organization": "Science and Information (SAI) Organization",
+      "location": {
+        "city": "London",
+        "country": "United Kingdom",
+        "virtual": false
+      },
+      "topics": [
+        "Foundational Computing",
+        "Artificial Intelligence",
+        "Large Language Models",
+        "Quantum Computing",
+        "Scalable Systems"
+      ],
+      "publication": {
+        "archival": true,
+        "details": "Springer Lecture Notes in Networks and Systems (LNNS)"
+      },
+      "milestones": [
+        {
+          "type": "paper_submission",
+          "label": "Submission Deadline (Round 1)",
+          "datetime": "2026-11-01T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "01 November 2026",
+          "evidence": "Round 1 (Open) * Submission Deadline: 01 November 2026. All times are in Anywhere on Earth (AoE) time zone."
+        },
+        {
+          "type": "notification",
+          "label": "Notification of Acceptance (Round 1)",
+          "datetime": "2026-11-15T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "15 November 2026",
+          "evidence": "Round 1 (Open) * Notification of Acceptance: 15 November 2026"
+        },
+        {
+          "type": "camera_ready",
+          "label": "Camera-Ready Submission (Round 1)",
+          "datetime": "2026-12-01T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "01 December 2026",
+          "evidence": "Round 1 (Open) * Camera-Ready Submission: 01 December 2026"
+        },
+        {
+          "type": "paper_submission",
+          "label": "Submission Deadline (Round 2)",
+          "datetime": "2026-12-01T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "01 December 2026",
+          "evidence": "Round 2 (Upcoming) * Submission Deadline: 01 December 2026"
+        },
+        {
+          "type": "notification",
+          "label": "Notification of Acceptance (Round 2)",
+          "datetime": "2027-01-15T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "15 January 2027",
+          "evidence": "Round 2 (Upcoming) * Notification of Acceptance: 15 January 2027"
+        },
+        {
+          "type": "camera_ready",
+          "label": "Camera-Ready Submission (Round 2)",
+          "datetime": "2027-01-31T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "31 January 2027",
+          "evidence": "Round 2 (Upcoming) * Camera-Ready Submission: 31 January 2027"
+        }
+      ],
+      "source": {
+        "url": "https://saiconference.com/Computing/CallforPapers",
+        "type": "Official CFP",
+        "evidence": "Official Call for Papers page detailing tracks, dates, and two-round submission cycles in AoE time for the 15th Computing Conference 2027.",
+        "last_verified": "2026-10-20T05:47:32.750Z"
+      },
+      "relevance": {
+        "level": "potential",
+        "label": "Potential match",
+        "matched_topics": [
+          "Deep Learning",
+          "Foundation Models"
+        ],
+        "reason": "The venue invites research across artificial intelligence, foundational models, and scalable architectures, fitting the researcher's background in deep learning and foundation models, although it is a general computing conference rather than a specialized computer vision or explainability venue."
+      },
+      "discovered": true,
+      "updated": false
+    },
+    {
+      "id": "stoc-2027-the-59th-acm-symposium-on-theory-of-computin-2027-7f808507",
+      "title": "STOC 2027: The 59th ACM Symposium on Theory of Computing",
+      "type": "conference",
+      "type_label": "Main conference",
+      "parent_event": "FCRC 2027",
+      "year": 2027,
+      "organization": "ACM SIGACT",
+      "location": {
+        "city": "Atlanta",
+        "country": "USA",
+        "virtual": false
+      },
+      "topics": [
+        "continuous and discrete optimization",
+        "computational learning theory",
+        "computational and foundational aspects of machine learning",
+        "randomness in computing",
+        "algorithms and data structures"
+      ],
+      "publication": {
+        "archival": true,
+        "details": "Accepted papers will be presented at the conference as part of FCRC 2027 and published in the symposium proceedings."
+      },
+      "milestones": [
+        {
+          "type": "paper_submission",
+          "label": "Paper submission",
+          "datetime": "2026-11-02T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Paper Submission Deadline: November 2, 2026 11:59 p.m. Anywhere on Earth (AoE)",
+          "evidence": "Paper Submission Deadline: November 2, 2026 11:59 p.m. Anywhere on Earth (AoE)"
+        }
+      ],
+      "source": {
+        "url": "https://acm-stoc.org/stoc2027/stoc2027-cfp.html",
+        "type": "Official CFP",
+        "evidence": "Official Call for Papers for STOC 2027 stating the paper submission deadline of November 2, 2026 at 11:59 p.m. AoE.",
+        "last_verified": "2026-10-20T05:48:57.236Z"
+      },
+      "relevance": {
+        "level": "potential",
+        "label": "Potential match",
+        "matched_topics": [
+          "Stochastic Deep Learning",
+          "stochastic optimization"
+        ],
+        "reason": "STOC 2027 focuses on theoretical computer science including continuous and discrete optimization and theoretical/foundational aspects of machine learning, which connects with Adarsha's focus on stochastic deep learning and stochastic optimization."
       },
       "discovered": true,
       "updated": false
