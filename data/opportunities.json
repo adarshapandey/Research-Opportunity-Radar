@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-20T05:50:56.795Z",
+  "generated_at": "2026-10-27T06:07:30.359Z",
   "data_mode": "live",
   "opportunities": [
     {
@@ -801,6 +801,79 @@
           "stochastic optimization"
         ],
         "reason": "STOC 2027 focuses on theoretical computer science including continuous and discrete optimization and theoretical/foundational aspects of machine learning, which connects with Adarsha's focus on stochastic deep learning and stochastic optimization."
+      },
+      "discovered": true,
+      "updated": false
+    },
+    {
+      "id": "aaai-27-workshops-2027-dfdf1271",
+      "title": "AAAI-27 Workshops",
+      "type": "workshop",
+      "type_label": "Attached workshop",
+      "parent_event": "AAAI-27",
+      "year": 2027,
+      "organization": "Association for the Advancement of Artificial Intelligence (AAAI)",
+      "location": {
+        "city": "Montréal",
+        "country": "Canada",
+        "virtual": false
+      },
+      "topics": [
+        "Artificial Intelligence",
+        "Machine Learning",
+        "Computer Vision",
+        "Explainable AI",
+        "Representation Learning"
+      ],
+      "publication": {
+        "archival": null,
+        "details": "Format determined by individual workshop organizers to foster informal exchange, discussion, and active participation."
+      },
+      "milestones": [
+        {
+          "type": "workshop_proposal",
+          "label": "Proposals for Workshops Due",
+          "datetime": "2026-08-28T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Friday, August 28, 2026: Proposals for Workshops Due",
+          "evidence": "Note: all deadlines are 'anywhere on earth' (UTC-12). Friday, August 28, 2026: Proposals for Workshops Due"
+        },
+        {
+          "type": "paper_submission",
+          "label": "Workshop Submissions Due to Organizers",
+          "datetime": "2026-11-20T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Friday, November 20, 2026: Workshop Submissions Due to Organizers",
+          "evidence": "Timetable for Organizers: Friday, November 20, 2026: Workshop Submissions Due to Organizers. All deadlines are 'anywhere on earth' (UTC-12)."
+        },
+        {
+          "type": "notification",
+          "label": "Notifications Sent to Authors",
+          "datetime": "2026-12-02T23:59:00-12:00",
+          "timezone": "UTC-12",
+          "timezone_label": "Anywhere on Earth",
+          "original_text": "Wednesday, December 2, 2026: Notifications Sent to Authors",
+          "evidence": "Timetable for Organizers: Wednesday, December 2, 2026: Notifications Sent to Authors. All deadlines are 'anywhere on earth' (UTC-12)."
+        }
+      ],
+      "source": {
+        "url": "https://aaai.org/conference/aaai/aaai-27/workshops-call",
+        "type": "Official event site",
+        "evidence": "AAAI-27 official Workshops Call for Proposals page confirming workshop dates (February 22-23, 2027 in Montréal) and author submission deadline of November 20, 2026 AoE.",
+        "last_verified": "2026-10-27T06:07:30.359Z"
+      },
+      "relevance": {
+        "level": "medium",
+        "label": "Good match",
+        "matched_topics": [
+          "Deep Learning",
+          "Explainable AI",
+          "Computer Vision",
+          "Multimodal Learning"
+        ],
+        "reason": "AAAI-27 workshops host specialized venues aligning with Adarsha's focus on deep learning, explainable AI, and multimodal vision architectures, with an active upcoming paper submission deadline of November 20, 2026 AoE."
       },
       "discovered": true,
       "updated": false
