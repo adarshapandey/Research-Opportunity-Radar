@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-10-27T06:03:11.718Z",
-  "updated_at": "2026-11-03T07:42:06.658Z",
+  "updated_at": "2026-11-10T08:09:52.849Z",
   "discovery": {
     "current_date": "2026-10-27",
     "query_log": [
@@ -1392,14 +1392,14 @@
         19
       ],
       "status": "retry_pending",
-      "attempts": 10,
-      "last_attempt_at": "2026-11-03T07:42:05.953Z",
+      "attempts": 15,
+      "last_attempt_at": "2026-11-10T08:09:47.469Z",
       "last_error": {
         "status": "retry_pending",
         "http_status": 503,
         "classification": "transient",
         "message": "Gemini request failed (503): {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
-        "failed_at": "2026-11-03T07:42:06.658Z"
+        "failed_at": "2026-11-10T08:09:52.849Z"
       },
       "extracted_at": null,
       "completed_at": null,
@@ -1436,13 +1436,13 @@
   ],
   "state": {
     "status": "retry_pending",
-    "attempts": 11,
+    "attempts": 16,
     "last_error": {
       "status": "retry_pending",
       "http_status": 503,
       "classification": "transient",
       "message": "Gemini request failed (503): {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n",
-      "failed_at": "2026-11-03T07:42:06.658Z"
+      "failed_at": "2026-11-10T08:09:52.849Z"
     }
   }
 }
