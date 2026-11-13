@@ -48,15 +48,13 @@
         "last_verified": "2026-10-13T07:28:42.257Z"
       },
       "relevance": {
-        "level": "high",
-        "label": "Strong match",
+        "level": "medium",
+        "label": "Good match",
         "matched_topics": [
           "Deep Learning",
-          "Representation Learning",
-          "Foundation Models",
-          "Computer Vision"
+          "Representation Learning"
         ],
-        "reason": "ICLR is the flagship venue for representation learning and deep learning, matching Adarsha's primary research areas in foundational representation learning, deep architectures, and computer vision."
+        "reason": "Listed information overlaps with your research interests: Deep Learning, Representation Learning."
       },
       "discovered": false,
       "updated": true,
@@ -65,7 +63,8 @@
         "archival": true,
         "details": "Proceedings at OpenReview"
       },
-      "change_note": "Paper deadline changed from 2026-10-01T23:59:00-12:00 to 2026-09-25T23:59:00-12:00."
+      "change_note": "Paper deadline changed from 2026-10-01T23:59:00-12:00 to 2026-09-25T23:59:00-12:00.",
+      "matches_profile": true
     },
     {
       "id": "cvpr-2027",
@@ -125,18 +124,20 @@
         "evidence": "Demonstration record. Replace through the discovery workflow before relying on this date."
       },
       "relevance": {
-        "level": "high",
-        "label": "Strong match",
+        "level": "medium",
+        "label": "Good match",
         "matched_topics": [
-          "computer vision",
-          "multimodal learning",
+          "Computer Vision",
+          "Multimodal Learning",
+          "3D Perception",
           "3D perception"
         ],
-        "reason": "Strong overlap with your work in computer vision, multimodal sensing, and 3D perception."
+        "reason": "Listed information overlaps with your research interests: Computer Vision, Multimodal Learning, 3D Perception, 3D perception."
       },
       "discovered": false,
       "updated": true,
-      "change_note": "Prototype change signal: paper deadline moved from Nov 10 to Nov 13."
+      "change_note": "Prototype change signal: paper deadline moved from Nov 10 to Nov 13.",
+      "matches_profile": true
     },
     {
       "id": "xai-vision-2027",
@@ -190,17 +191,17 @@
         "evidence": "Demonstration workshop inspired by common CFP themes; not an asserted real call."
       },
       "relevance": {
-        "level": "high",
-        "label": "Strong match",
+        "level": "medium",
+        "label": "Good match",
         "matched_topics": [
-          "explainable AI",
-          "computer vision",
-          "explanation stability"
+          "Computer Vision",
+          "Explainable AI"
         ],
-        "reason": "The call emphasizes robust explanations for vision models, directly aligning with your explanation-stability project."
+        "reason": "Listed information overlaps with your research interests: Computer Vision, Explainable AI."
       },
       "discovered": true,
-      "updated": false
+      "updated": false,
+      "matches_profile": true
     },
     {
       "id": "multimodal-earth-2027",
@@ -247,17 +248,18 @@
         "evidence": "Demonstration workshop inspired by common CFP themes; not an asserted real call."
       },
       "relevance": {
-        "level": "high",
-        "label": "Strong match",
+        "level": "medium",
+        "label": "Good match",
         "matched_topics": [
-          "remote sensing",
-          "multimodal fusion",
-          "UAV sensing"
+          "Remote Sensing",
+          "Foundation Models",
+          "multimodal fusion"
         ],
-        "reason": "Its scope combines multimodal fusion, aerial sensing, and Earth observation—the center of your UAV sensing work."
+        "reason": "Listed information overlaps with your research interests: Remote Sensing, Foundation Models, multimodal fusion."
       },
       "discovered": true,
-      "updated": false
+      "updated": false,
+      "matches_profile": true
     },
     {
       "id": "uncertainty-dl-2027",
@@ -303,16 +305,19 @@
         "evidence": "Demonstration workshop inspired by common CFP themes; not an asserted real call."
       },
       "relevance": {
-        "level": "high",
-        "label": "Strong match",
+        "level": "medium",
+        "label": "Good match",
         "matched_topics": [
-          "uncertainty",
-          "stochastic deep learning"
+          "Deep Learning",
+          "Stochastic Deep Learning",
+          "Stochastic deep learning",
+          "uncertainty"
         ],
-        "reason": "A focused fit for your stochastic deep learning research, with explicit emphasis on predictive uncertainty."
+        "reason": "Listed information overlaps with your research interests: Deep Learning, Stochastic Deep Learning, Stochastic deep learning, uncertainty."
       },
       "discovered": true,
-      "updated": false
+      "updated": false,
+      "matches_profile": true
     },
     {
       "id": "miccai-2027",
@@ -351,13 +356,15 @@
         "level": "medium",
         "label": "Good match",
         "matched_topics": [
-          "medical imaging",
-          "computer vision"
+          "Computer Vision",
+          "Multimodal Learning",
+          "Medical Imaging"
         ],
-        "reason": "Broad alignment with your medical imaging and computer vision interests; project-level fit depends on the call."
+        "reason": "Listed information overlaps with your research interests: Computer Vision, Multimodal Learning, Medical Imaging."
       },
       "discovered": false,
-      "updated": false
+      "updated": false,
+      "matches_profile": true
     },
     {
       "id": "aistats-2027-30th-international-conference-on-artifici-2027-ec12a616",
@@ -447,17 +454,14 @@
         "last_verified": "2026-10-20T05:47:32.750Z"
       },
       "relevance": {
-        "level": "high",
-        "label": "Strong match",
-        "matched_topics": [
-          "Deep Learning",
-          "Stochastic Deep Learning",
-          "Representation Learning"
-        ],
-        "reason": "AISTATS centers on the intersection of machine learning, probabilistic methods, and statistics, strongly matching the profile's research in stochastic deep learning, uncertainty estimation, and stochastic optimization."
+        "level": "potential",
+        "label": "Potential match",
+        "matched_topics": [],
+        "reason": "No direct topic matches to your current research profile. This previously saved opportunity remains available in search and your watchlist."
       },
       "discovered": false,
-      "updated": false
+      "updated": false,
+      "matches_profile": false
     },
     {
       "id": "aaai-27-the-41st-annual-aaai-conference-on-artificial--2027-bc96b0d9",
@@ -547,18 +551,17 @@
         "last_verified": "2026-09-29T23:50:19.908Z"
       },
       "relevance": {
-        "level": "high",
-        "label": "Strong match",
+        "level": "medium",
+        "label": "Good match",
         "matched_topics": [
-          "Deep Learning",
           "Computer Vision",
-          "Explainable AI",
-          "Representation Learning"
+          "Deep Learning"
         ],
-        "reason": "AAAI is a flagship general AI conference spanning deep learning, representation learning, vision, and explainable AI, aligning directly with the candidate's core research background."
+        "reason": "Listed information overlaps with your research interests: Computer Vision, Deep Learning."
       },
       "discovered": true,
-      "updated": false
+      "updated": false,
+      "matches_profile": true
     },
     {
       "id": "3dv-2027-14th-international-conference-on-3d-vision-2027-b3c316c8",
@@ -641,18 +644,16 @@
         "last_verified": "2026-09-29T23:50:19.908Z"
       },
       "relevance": {
-        "level": "high",
-        "label": "Strong match",
+        "level": "medium",
+        "label": "Good match",
         "matched_topics": [
-          "3D Perception",
-          "Computer Vision",
-          "LiDAR",
-          "Representation Learning"
+          "Computer Vision"
         ],
-        "reason": "Explicitly targets 3D vision, optical sensing, geometric representations, and 3D perception, which directly match the candidate's keywords (LiDAR, 3D perception) and research areas."
+        "reason": "Listed information overlaps with your research interests: Computer Vision."
       },
       "discovered": true,
-      "updated": false
+      "updated": false,
+      "matches_profile": true
     },
     {
       "id": "15th-computing-conference-2027-6eeaca8a",
@@ -743,14 +744,12 @@
       "relevance": {
         "level": "potential",
         "label": "Potential match",
-        "matched_topics": [
-          "Deep Learning",
-          "Foundation Models"
-        ],
-        "reason": "The venue invites research across artificial intelligence, foundational models, and scalable architectures, fitting the researcher's background in deep learning and foundation models, although it is a general computing conference rather than a specialized computer vision or explainability venue."
+        "matched_topics": [],
+        "reason": "No direct topic matches to your current research profile. This previously saved opportunity remains available in search and your watchlist."
       },
       "discovered": true,
-      "updated": false
+      "updated": false,
+      "matches_profile": false
     },
     {
       "id": "stoc-2027-the-59th-acm-symposium-on-theory-of-computin-2027-7f808507",
@@ -796,14 +795,12 @@
       "relevance": {
         "level": "potential",
         "label": "Potential match",
-        "matched_topics": [
-          "Stochastic Deep Learning",
-          "stochastic optimization"
-        ],
-        "reason": "STOC 2027 focuses on theoretical computer science including continuous and discrete optimization and theoretical/foundational aspects of machine learning, which connects with Adarsha's focus on stochastic deep learning and stochastic optimization."
+        "matched_topics": [],
+        "reason": "No direct topic matches to your current research profile. This previously saved opportunity remains available in search and your watchlist."
       },
       "discovered": true,
-      "updated": false
+      "updated": false,
+      "matches_profile": false
     },
     {
       "id": "aaai-27-workshops-2027-dfdf1271",
@@ -868,15 +865,15 @@
         "level": "medium",
         "label": "Good match",
         "matched_topics": [
-          "Deep Learning",
-          "Explainable AI",
           "Computer Vision",
-          "Multimodal Learning"
+          "Explainable AI",
+          "Representation Learning"
         ],
-        "reason": "AAAI-27 workshops host specialized venues aligning with Adarsha's focus on deep learning, explainable AI, and multimodal vision architectures, with an active upcoming paper submission deadline of November 20, 2026 AoE."
+        "reason": "Listed information overlaps with your research interests: Computer Vision, Explainable AI, Representation Learning."
       },
       "discovered": true,
-      "updated": false
+      "updated": false,
+      "matches_profile": true
     }
   ]
 }
