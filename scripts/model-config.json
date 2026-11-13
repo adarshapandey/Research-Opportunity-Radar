@@ -1,0 +1,7 @@
+{
+  "id": "Qwen2.5-3B-Instruct-Q4_K_M",
+  "model_url": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/7dabda4d13d513e3e842b20f0d435c732f172cbe/qwen2.5-3b-instruct-q4_k_m.gguf",
+  "model_sha256": "626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d",
+  "runtime_url": "https://github.com/ggml-org/llama.cpp/releases/download/b6000/llama-b6000-bin-ubuntu-x64.zip",
+  "runtime_sha256": "66244356dd242ae3a2510929ec4a840db65a3f9e7ad712918dbf02a266badfa5"
+}

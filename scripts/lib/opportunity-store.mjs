@@ -40,34 +40,37 @@ function stableId(opportunity) {
 
 export function validateOpportunity(opportunity, allowedSourceUrls = new Set()) {
   const errors = [];
-  if (!opportunity || typeof opportunity !== "object") return ["not an object"];
-  if (!opportunity.title) errors.push("missing title");
-  if (!["conference", "workshop"].includes(opportunity.type)) errors.push("invalid type");
+  const text = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 4000;
+  const strings = value => Array.isArray(value) && value.length <= 100 && value.every(text);
+  if (!opportunity || typeof opportunity !== 'object' || Array.isArray(opportunity)) return ['not an object'];
+  if (!text(opportunity.title)) errors.push('missing title');
+  if (!['conference', 'workshop'].includes(opportunity.type)) errors.push('invalid type');
   const year = yearFor(opportunity);
-  if (!year || year < 2000 || year > 2100) errors.push("invalid year");
-  if (!Array.isArray(opportunity.milestones) || !opportunity.milestones.length) errors.push("missing milestones");
-
-  for (const milestone of opportunity.milestones || []) {
-    if (!milestone.type || !milestone.label || !milestone.original_text) errors.push("incomplete milestone");
-    if (!milestone.evidence) errors.push("missing milestone evidence");
-    if (!milestone.datetime || Number.isNaN(Date.parse(milestone.datetime))) errors.push("invalid milestone datetime");
-    if (milestone.datetime && !/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(milestone.datetime)) errors.push("milestone datetime lacks explicit offset");
-    if (!validTimezone(milestone.timezone)) errors.push("invalid milestone timezone");
+  if (!year || year < 2000 || year > 2100) errors.push('invalid year');
+  if (!text(opportunity.type_label) || !text(opportunity.organization)) errors.push('missing display metadata');
+  if (!text(opportunity.location?.city) || !text(opportunity.location?.country) || typeof opportunity.location?.virtual !== 'boolean') errors.push('invalid location');
+  if (!strings(opportunity.topics) || !strings(opportunity.relevance?.matched_topics)) errors.push('invalid topic arrays');
+  if (!Array.isArray(opportunity.milestones) || !opportunity.milestones.length || opportunity.milestones.length > 40) errors.push('missing or excessive milestones');
+  for (const milestone of Array.isArray(opportunity.milestones) ? opportunity.milestones : []) {
+    if (!milestone || typeof milestone !== 'object') { errors.push('invalid milestone'); continue; }
+    if (!text(milestone.type) || !text(milestone.label) || !text(milestone.original_text)) errors.push('incomplete milestone');
+    if (!text(milestone.evidence)) errors.push('missing milestone evidence');
+    if (typeof milestone.datetime !== 'string' || Number.isNaN(Date.parse(milestone.datetime))) errors.push('invalid milestone datetime');
+    if (typeof milestone.datetime !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:\d{2})$/.test(milestone.datetime)) errors.push('milestone datetime lacks explicit offset');
+    if (!validTimezone(milestone.timezone)) errors.push('invalid milestone timezone');
   }
-
   const sourceUrl = opportunity.source?.url;
   const canonicalSource = canonicalizeUrl(sourceUrl);
-  if (!sourceUrl?.startsWith("https://") || !canonicalSource) errors.push("missing HTTPS source");
-  if (allowedSourceUrls.size && canonicalSource && !allowedSourceUrls.has(canonicalSource)) errors.push("source was not supplied by Tavily");
-  if (!opportunity.source?.evidence) errors.push("missing source evidence");
-  if (!opportunity.relevance?.reason || !opportunity.relevance?.label) errors.push("missing relevance explanation");
-  if (!["Strong match", "Good match", "Potential match"].includes(opportunity.relevance?.label)) errors.push("invalid relevance label");
+  if (typeof sourceUrl !== 'string' || !sourceUrl.startsWith('https://') || !canonicalSource) errors.push('missing HTTPS source');
+  if (allowedSourceUrls.size && canonicalSource && !allowedSourceUrls.has(canonicalSource)) errors.push('source was not supplied by Tavily');
+  if (!text(opportunity.source?.evidence) || !text(opportunity.source?.type)) errors.push('missing source evidence');
+  if (!text(opportunity.relevance?.reason)) errors.push('missing relevance explanation');
+  if (!['Strong match', 'Good match', 'Potential match'].includes(opportunity.relevance?.label)) errors.push('invalid relevance label');
   return [...new Set(errors)];
 }
 
 export function mergeOpportunities(existing, discovered, verifiedAt, allowedSourceUrls = new Set()) {
   const records = new Map(existing.map(item => [item.id, item]));
-  const byUrl = new Map();
   const byIdentity = new Map();
   const seenIncoming = new Set();
   const stats = {
@@ -80,8 +83,6 @@ export function mergeOpportunities(existing, discovered, verifiedAt, allowedSour
   };
 
   const indexRecord = record => {
-    const canonicalUrl = canonicalizeUrl(record.source?.url);
-    if (canonicalUrl) byUrl.set(canonicalUrl, record.id);
     const identity = identityKey(record);
     if (identity && !identity.endsWith("|")) byIdentity.set(identity, record.id);
   };
@@ -96,28 +97,27 @@ export function mergeOpportunities(existing, discovered, verifiedAt, allowedSour
     }
 
     incoming.year = yearFor(incoming);
-    const canonicalUrl = canonicalizeUrl(incoming.source.url);
     const identity = identityKey(incoming);
-    if (seenIncoming.has(canonicalUrl) || seenIncoming.has(identity)) {
+    if (seenIncoming.has(identity)) {
       stats.duplicates++;
-      console.warn(`Skipped duplicate Gemini record: ${incoming.title}`);
+      console.warn(`Skipped duplicate extracted record: ${incoming.title}`);
       continue;
     }
-    seenIncoming.add(canonicalUrl);
     seenIncoming.add(identity);
 
-    const priorId = byUrl.get(canonicalUrl) || byIdentity.get(identity) || (records.has(incoming.id) ? incoming.id : null);
+    const priorId = byIdentity.get(identity);
     const prior = priorId ? records.get(priorId) : null;
     const recordId = prior?.id || stableId(incoming);
     const priorPaper = prior?.milestones?.find(milestone => milestone.type === "paper_submission")?.datetime;
     const nextPaper = incoming.milestones.find(milestone => milestone.type === "paper_submission")?.datetime;
-    const deadlineChanged = Boolean(priorPaper && nextPaper && priorPaper !== nextPaper);
+    const deadlineChanged = Boolean(priorPaper && nextPaper && Date.parse(priorPaper) !== Date.parse(nextPaper));
 
     const merged = {
       ...prior,
       ...incoming,
       id: recordId,
-      discovered: !prior,
+      discovered: prior?.discovered ?? true,
+      milestones: [...incoming.milestones, ...(prior?.milestones || []).filter(m => !incoming.milestones.some(n => n.type === m.type))],
       updated: deadlineChanged,
       change_note: deadlineChanged
         ? `Paper deadline changed from ${priorPaper} to ${nextPaper}.`

@@ -44,7 +44,7 @@
 
           <div class="demo-notice" id="prototype-notice" role="note">
             <span>Prototype data</span>
-            Dates below demonstrate the experience and are not submission advice. Connect Gemini to replace them with verified live records.
+            Dates below demonstrate the experience and are not submission advice. Run discovery to replace demonstration entries with source-backed records.
             <button id="dismiss-demo" aria-label="Dismiss prototype notice">×</button>
           </div>
 
@@ -137,12 +137,16 @@
     <div class="modal-backdrop" id="profile-modal" hidden>
       <article class="profile-sheet" role="dialog" aria-modal="true" aria-labelledby="profile-title">
         <button class="close-button" data-close="profile-modal" aria-label="Close profile">×</button>
-        <p class="eyebrow accent">Personalization</p><h2 id="profile-title">Research profile</h2><p class="modal-intro">The radar uses these signals to explain relevance. Edit them as your PhD evolves.</p>
+        <p class="eyebrow accent">Personalization</p><h2 id="profile-title">Research profile</h2><p class="modal-intro">Save your profile to GitHub and refresh the radar. The update runs in the background and may take several minutes. Your research profile is public.</p>
         <form id="profile-form">
+          <fieldset id="profile-fields">
           <label>Research areas<textarea name="areas" rows="3"></textarea><small>One topic per line</small></label>
           <label>Current projects<textarea name="projects" rows="3"></textarea><small>Concrete work gets stronger matches</small></label>
           <label>Keywords<textarea name="keywords" rows="3"></textarea><small>Methods, modalities, and application domains</small></label>
-          <div class="form-actions"><button type="button" class="quiet-button" data-close="profile-modal">Cancel</button><button type="submit" class="primary-button">Save profile</button></div>
+          <label>GitHub access token<input id="github-token" type="password" autocomplete="off" spellcheck="false" required placeholder="Repository-scoped GitHub token" /><small>Use a fine-grained token for this repository with Actions: read/write and Contents: read. It is sent only to GitHub and is never saved.</small></label>
+          </fieldset>
+          <div id="profile-progress" class="profile-progress" role="status" aria-live="polite" hidden><span class="profile-spinner" aria-hidden="true"></span><p id="profile-status"></p><a id="profile-run-link" target="_blank" rel="noopener" hidden>View GitHub run ↗</a></div>
+          <div class="form-actions"><button id="profile-cancel" type="button" class="quiet-button" data-close="profile-modal">Cancel</button><button id="profile-save" type="submit" class="primary-button">Save profile &amp; update radar</button></div>
         </form>
       </article>
     </div>

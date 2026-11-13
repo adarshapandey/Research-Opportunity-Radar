@@ -10,7 +10,11 @@ import {
 } from "../discovery-queries.mjs";
 import { mergeOpportunities, validateOpportunity } from "../lib/opportunity-store.mjs";
 import { runDiscovery } from "../discover.mjs";
-import { GeminiApiError } from "../providers/gemini.mjs";
+import { parseDeadline } from '../lib/deadlines.mjs';
+import { groundRecords, extractOpportunitiesLocally, runLocalModel } from '../providers/local-model.mjs';
+import { publicDataset, buildSite } from '../build-site.mjs';
+import { nextMilestone, escapeHTML, readStored } from '../../radar-utils.js';
+import { readdir, chmod } from 'node:fs/promises';
 
 const profile = {
   research_areas: ["Computer Vision", "Medical Imaging", "Remote Sensing", "Foundation Models"],
@@ -46,6 +50,9 @@ function opportunity(overrides = {}) {
     type: "workshop",
     type_label: "Independent workshop",
     year: 2027,
+    organization: 'Example workshop',
+    topics: ['Computer Vision'],
+    location: { city: 'Unknown', country: 'Unknown', virtual: false },
     milestones: [{
       type: "paper_submission",
       label: "Paper submission",
@@ -74,7 +81,7 @@ test("merge matches deterministic identity, detects paper changes, and skips dup
       evidence: "The old official page stated the submission deadline."
     }]
   })];
-  const duplicate = opportunity({ source: { url: "https://example.net/other-page", evidence: "Duplicate page" } });
+  const duplicate = opportunity({ source: { url: "https://example.net/other-page", type: "Official CFP", evidence: "Duplicate page" } });
   const allowed = new Set([canonicalizeUrl("https://example.org/official-cfp"), canonicalizeUrl("https://example.net/other-page")]);
   const result = mergeOpportunities(existing, [opportunity(), duplicate], "2026-09-27T12:00:00Z", allowed);
 
@@ -135,366 +142,158 @@ test("validation accepts bare numeric timezone offsets on every supported Node v
   assert.deepEqual(errors, []);
 });
 
-const quietLogger = { log() {}, warn() {}, error() {} };
 
-async function temporaryWorkspace() {
-  const root = await mkdtemp(join(tmpdir(), "radar-discovery-test-"));
-  await mkdir(join(root, "data"));
-  await writeFile(join(root, "data/profile.json"), `${JSON.stringify(profile)}\n`);
-  await writeFile(join(root, "data/opportunities.json"), `${JSON.stringify({
-    generated_at: "2026-09-01T00:00:00Z",
-    data_mode: "test",
-    opportunities: []
-  })}\n`);
+const quietLogger = { log() {}, warn() {}, error() {} };
+async function workspace() {
+  const root = await mkdtemp(join(tmpdir(), 'radar-local-test-'));
+  await mkdir(join(root,'data'));
+  await writeFile(join(root,'data/profile.json'),JSON.stringify(profile));
+  await writeFile(join(root,'data/opportunities.json'),JSON.stringify({ generated_at:'2026-09-01T00:00:00Z',data_mode:'live',opportunities:[] }));
   return root;
 }
+const source = { title:'Example Vision Workshop 2027', url:'https://example.org/official-cfp', raw_content:'Example Vision Workshop 2027 covers Computer Vision. Paper submission deadline: November 8, 2026, 11:59 PM AoE.', score:1 };
+const fixedNow = () => new Date('2026-09-27T12:00:00Z');
+const readData = async root => JSON.parse(await readFile(join(root,'data/opportunities.json'),'utf8'));
+const options = root => ({root,env:{TAVILY_API_KEY:'test',TAVILY_MAX_QUERIES:'1'},now:fixedNow,logger:quietLogger,search:async () => ({results:[source]})});
 
-function tavilyResponse(count = 1) {
-  return {
-    credits: 1,
-    requestId: "test-request",
-    results: Array.from({ length: count }, (_, index) => ({
-      title: `Official Test Workshop ${index + 1}`,
-      url: `https://events.example.org/workshop-${index + 1}`,
-      raw_content: `Official call for papers ${index + 1}: submission is November ${index + 1}, 2026 at 11:59 PM AoE.`,
-      score: 1 - index / 100,
-      discovery_query: "mocked profile query"
-    }))
-  };
-}
-
-function extractedOpportunity(candidate, index = 0) {
-  return {
-    id: `model-workshop-${index + 1}`,
-    title: `Official Test Workshop ${index + 1}`,
-    type: "workshop",
-    type_label: "Independent workshop",
-    year: 2027,
-    milestones: [{
-      type: "paper_submission",
-      label: "Paper submission",
-      datetime: `2026-11-${String(index + 1).padStart(2, "0")}T23:59:00-12:00`,
-      timezone: "UTC-12",
-      timezone_label: "Anywhere on Earth",
-      original_text: `November ${index + 1}, 2026 at 11:59 PM AoE`,
-      evidence: "The official call states this submission deadline."
-    }],
-    source: { url: candidate.url, type: "Official CFP", evidence: "Official call for papers and deadline." },
-    relevance: { level: "high", label: "Strong match", matched_topics: ["computer vision"], reason: "Matches the research profile." }
-  };
-}
-
-async function cacheAt(root) {
-  return JSON.parse(await readFile(join(root, "data/discovery-cache.json"), "utf8"));
-}
-
-test("normal run caches Tavily results before Gemini, writes opportunities, then deletes cache", async () => {
-  const root = await temporaryWorkspace();
-  let tavilyCalls = 0;
-  let geminiCalls = 0;
-  let sawCacheDuringGemini = false;
-  const result = await runDiscovery({
-    root,
-    env: { TAVILY_API_KEY: "test", GEMINI_API_KEY: "test", TAVILY_MAX_QUERIES: "1" },
-    now: () => new Date("2026-09-27T12:00:00Z"),
-    search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async ({ candidates }) => {
-      geminiCalls++;
-      await access(join(root, "data/discovery-cache.json"));
-      sawCacheDuringGemini = true;
-      return { opportunities: [extractedOpportunity(candidates[0], 0)] };
-    },
-    logger: quietLogger
-  });
-
-  assert.equal(result.outcome, "completed");
-  assert.equal(tavilyCalls, 1);
-  assert.equal(geminiCalls, 1);
-  assert.equal(result.geminiRequests, 1);
-  assert.equal(sawCacheDuringGemini, true);
-  await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
-  const output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
-  assert.equal(output.opportunities.length, 1);
+test('explicit evidence dates normalize AoE, UTC and offsets', () => {
+  assert.equal(parseDeadline('November 8, 2026, 11:59 PM AoE').datetime,'2026-11-08T23:59:00-12:00');
+  assert.equal(parseDeadline('8 December 2026 at 17:00 UTC+01:00').datetime,'2026-12-08T17:00:00+01:00');
+  assert.equal(parseDeadline('2026-12-08T17:00:00Z').datetime,'2026-12-08T17:00:00+00:00');
 });
 
-test("completed outputs from an older all-or-nothing cache are merged without API calls", async () => {
-  const root = await temporaryWorkspace();
-  const candidate = tavilyResponse(1).results[0];
-  await writeFile(join(root, "data/discovery-cache.json"), `${JSON.stringify({
-    version: 1,
-    created_at: "2026-09-27T11:00:00Z",
-    updated_at: "2026-09-27T11:05:00Z",
-    discovery: { current_date: "2026-09-27", query_log: [], tavily_summary: {}, configuration: { geminiBatchSize: 1 } },
-    gemini_context: { profile, existing_opportunities: [] },
-    candidates: [candidate],
-    batches: [{
-      index: 0,
-      candidate_indexes: [0],
-      status: "completed",
-      completed_at: "2026-09-27T11:04:00Z",
-      opportunities: [extractedOpportunity(candidate, 0)]
-    }],
-    state: {
-      status: "retry_pending",
-      attempts: 1,
-      last_error: { http_status: 503, message: "later batch failed" },
-      next_retry_at: "2026-09-27T13:00:00Z"
-    }
-  }, null, 2)}\n`);
-
-  let tavilyCalls = 0;
-  let geminiCalls = 0;
-  const result = await runDiscovery({
-    root,
-    env: {},
-    now: () => new Date("2026-09-27T12:00:00Z"),
-    search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async () => { geminiCalls++; return { opportunities: [] }; },
-    logger: quietLogger
-  });
-
-  assert.equal(result.outcome, "completed");
-  assert.equal(tavilyCalls, 0);
-  assert.equal(geminiCalls, 0);
-  const output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
-  assert.deepEqual(output.opportunities.map(item => item.title), ["Official Test Workshop 1"]);
-  await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
+test('ambiguous, invalid and incomplete source deadlines are rejected', () => {
+  for (const text of ['November 8, 2026 AoE','November 8, 2026 11:59 PM','February 30, 2026 17:00 UTC','November 8, 2026 17:00 CST','November 8, 2026 17:00 UTC+15','November 8, 2026 17:00 UTC and November 9, 2026 17:00 UTC']) assert.equal(parseDeadline(text),null,text);
 });
 
-test("completed output rejected by older timezone validation is revalidated without API calls", async () => {
-  const root = await temporaryWorkspace();
-  const candidate = tavilyResponse(1).results[0];
-  const cachedOpportunity = extractedOpportunity(candidate, 0);
-  cachedOpportunity.milestones[0].timezone = "-12:00";
-  await writeFile(join(root, "data/discovery-cache.json"), `${JSON.stringify({
-    version: 1,
-    created_at: "2026-09-27T11:00:00Z",
-    updated_at: "2026-09-27T11:05:00Z",
-    discovery: { current_date: "2026-09-27", query_log: [], tavily_summary: {}, configuration: { geminiBatchSize: 1 } },
-    gemini_context: { profile, existing_opportunities: [] },
-    candidates: [candidate],
-    batches: [{
-      index: 0,
-      candidate_indexes: [0],
-      status: "completed",
-      completed_at: "2026-09-27T11:04:00Z",
-      merged_at: "2026-09-27T11:04:00Z",
-      merge_stats: { received: 1, accepted: 0, rejected: 1, duplicates: 0, newRecords: 0, updatedRecords: 0 },
-      opportunities: [cachedOpportunity]
-    }],
-    state: { status: "pending", attempts: 0, last_error: null, next_retry_at: null }
-  }, null, 2)}\n`);
-
-  let tavilyCalls = 0;
-  let geminiCalls = 0;
-  const result = await runDiscovery({
-    root,
-    env: {},
-    now: () => new Date("2026-09-27T12:00:00Z"),
-    search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async () => { geminiCalls++; return { opportunities: [] }; },
-    logger: quietLogger
-  });
-
-  assert.equal(result.outcome, "completed");
-  assert.equal(tavilyCalls, 0);
-  assert.equal(geminiCalls, 0);
-  const output = JSON.parse(await readFile(join(root, "data/opportunities.json"), "utf8"));
-  assert.equal(output.data_mode, "live");
-  assert.deepEqual(output.opportunities.map(item => item.title), ["Official Test Workshop 1"]);
-  await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
+test('grounding rejects fabricated evidence and unrelated source topics', () => {
+  const candidate = {...source,content:source.raw_content};
+  const raw = {title:source.title,type:'workshop',year:2027,organization:'Made up',topics:['Computer Vision','Invented'],milestones:[{type:'paper_submission',evidence:'Paper submission deadline: November 8, 2026, 11:59 PM AoE.'}]};
+  const [record] = groundRecords([raw],candidate,profile);
+  assert.equal(record.milestones[0].datetime,'2026-11-08T23:59:00-12:00');
+  assert.equal(record.organization,'See source');
+  assert.deepEqual(record.topics,['Computer Vision']);
+  assert.equal(groundRecords([{...raw,milestones:[{type:'paper_submission',evidence:'November 9, 2026, 11:59 PM AoE'}]}],candidate,profile).length,0);
+  assert.equal(groundRecords([raw],candidate,{research_areas:['Astronomy']}).length,0);
 });
 
-test("transient Gemini failures retry immediately and succeed on attempt three", async () => {
-  const root = await temporaryWorkspace();
-  let tavilyCalls = 0;
-  let geminiCalls = 0;
-  const messages = [];
-  const logger = {
-    log(message) { messages.push(message); },
-    warn(message) { messages.push(message); },
-    error(message) { messages.push(message); }
-  };
-  const result = await runDiscovery({
-    root,
-    env: { TAVILY_API_KEY: "test", GEMINI_API_KEY: "test", TAVILY_MAX_QUERIES: "1" },
-    now: () => new Date("2026-09-27T12:00:00Z"),
-    search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async ({ candidates }) => {
-      geminiCalls++;
-      if (geminiCalls < 3) throw new GeminiApiError(503, "temporarily unavailable");
-      return { opportunities: [extractedOpportunity(candidates[0], 0)] };
-    },
-    logger
-  });
-
-  assert.equal(result.outcome, "completed");
-  assert.equal(result.geminiRequests, 3);
-  assert.equal(geminiCalls, 3);
-  assert.equal(tavilyCalls, 1);
-  assert.ok(messages.some(message => message.includes("attempt 1/5")));
-  assert.ok(messages.some(message => message.includes("failed with HTTP 503")));
-  assert.ok(messages.some(message => message.includes("Retrying Gemini immediately")));
-  assert.ok(messages.some(message => message.includes("attempt 3/5 succeeded")));
-  await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
+test('split model records consolidate milestones without dropping a submission deadline', () => {
+  const evidence = 'Abstract submission: November 1, 2026, 17:00 UTC. Paper submission: November 8, 2026, 17:00 UTC.';
+  const candidate = {...source,content:`${source.title} Computer Vision. ${evidence}`};
+  const raw = {title:source.title,type:'workshop',year:2027,organization:'Unknown',topics:['Computer Vision']};
+  const records = groundRecords([
+    {...raw,milestones:[{type:'abstract_submission',evidence:'Abstract submission: November 1, 2026, 17:00 UTC.'}]},
+    {...raw,milestones:[{type:'paper_submission',evidence:'Paper submission: November 8, 2026, 17:00 UTC.'}]}
+  ],candidate,profile);
+  assert.equal(records.length,1);
+  assert.equal(records[0].milestones.length,2);
 });
 
-test("five transient failures stop the run and preserve completed checkpoints without rerunning Tavily", async () => {
-  const root = await temporaryWorkspace();
-  const candidates = tavilyResponse(2).results;
-  await writeFile(join(root, "data/discovery-cache.json"), `${JSON.stringify({
-    version: 1,
-    created_at: "2026-09-27T11:00:00Z",
-    updated_at: "2026-09-27T11:05:00Z",
-    discovery: { current_date: "2026-09-27", query_log: [], tavily_summary: {}, configuration: { geminiBatchSize: 1 } },
-    gemini_context: { profile, existing_opportunities: [] },
-    candidates,
-    batches: [
-      {
-        index: 0,
-        candidate_indexes: [0],
-        status: "completed",
-        attempts: 1,
-        completed_at: "2026-09-27T11:04:00Z",
-        merged_at: "2026-09-27T11:04:00Z",
-        merge_stats: { received: 0, accepted: 0, rejected: 0, duplicates: 0, newRecords: 0, updatedRecords: 0 },
-        merge_validation_version: 2,
-        opportunities: []
-      },
-      {
-        index: 1,
-        candidate_indexes: [1],
-        status: "pending",
-        attempts: 0,
-        extracted_at: null,
-        completed_at: null,
-        merged_at: null,
-        opportunities: []
-      }
-    ],
-    state: { status: "pending", attempts: 0, last_error: null }
-  }, null, 2)}\n`);
-
-  let tavilyCalls = 0;
-  let geminiCalls = 0;
-  const messages = [];
-  await assert.rejects(runDiscovery({
-    root,
-    env: { GEMINI_API_KEY: "test" },
-    now: () => new Date("2026-09-27T12:00:00Z"),
-    search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async () => {
-      geminiCalls++;
-      throw new GeminiApiError(503, "temporarily unavailable");
-    },
-    logger: {
-      log(message) { messages.push(message); },
-      warn(message) { messages.push(message); },
-      error(message) { messages.push(message); }
-    }
-  }), /503/);
-
-  assert.equal(geminiCalls, 5);
-  assert.equal(tavilyCalls, 0);
-  const checkpoint = await cacheAt(root);
-  assert.deepEqual(checkpoint.batches.map(batch => batch.status), ["completed", "retry_pending"]);
-  assert.equal(checkpoint.batches[0].attempts, 1);
-  assert.equal(checkpoint.batches[1].attempts, 5);
-  assert.equal(checkpoint.state.attempts, 5);
-  assert.equal(checkpoint.state.status, "retry_pending");
-  assert.equal("next_retry_at" in checkpoint.state, false);
-  assert.ok(messages.some(message => message.includes("attempt 5/5 failed with HTTP 503")));
-  assert.ok(messages.includes("Maximum immediate Gemini attempts reached."));
-  assert.ok(messages.some(message => message.includes("next weekly discovery run")));
+test('different opportunities sharing an event page remain separate', () => {
+  const first = opportunity();
+  const second = opportunity({title:'Another Vision Workshop 2027'});
+  const result = mergeOpportunities([], [first,second], '2026-09-27T00:00:00Z');
+  assert.equal(result.opportunities.length,2);
 });
 
-test("permanent Gemini errors make one request and preserve blocked-cache behavior", async () => {
-  const root = await temporaryWorkspace();
-  let tavilyCalls = 0;
-  let geminiCalls = 0;
-  await assert.rejects(runDiscovery({
-    root,
-    env: { TAVILY_API_KEY: "test", GEMINI_API_KEY: "test", TAVILY_MAX_QUERIES: "1" },
-    now: () => new Date("2026-09-27T12:00:00Z"),
-    search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async () => {
-      geminiCalls++;
-      throw new GeminiApiError(401, "invalid API key");
-    },
-    logger: quietLogger
-  }), /401/);
-
-  assert.equal(geminiCalls, 1);
-  assert.equal(tavilyCalls, 1);
-  assert.equal((await cacheAt(root)).state.status, "blocked");
-
-  const blocked = await runDiscovery({
-    root,
-    env: { GEMINI_API_KEY: "test" },
-    now: () => new Date("2026-09-27T12:30:00Z"),
-    search: async () => { tavilyCalls++; return tavilyResponse(1); },
-    extract: async () => { geminiCalls++; return { opportunities: [] }; },
-    logger: quietLogger
-  });
-  assert.equal(blocked.outcome, "blocked");
-  assert.equal(geminiCalls, 1);
-  assert.equal(tavilyCalls, 1);
+test('extractor rejects malformed output without accepting arbitrary fields', async () => {
+  await assert.rejects(extractOpportunitiesLocally({candidate:{...source,content:source.raw_content},profile,currentDate:'2026-09-27',infer:async()=>({opportunities:'bad'})}),/lacks opportunities/);
 });
 
-test("completed cached batches are skipped while an unfinished batch gets immediate retry behavior", async () => {
-  const root = await temporaryWorkspace();
-  const candidates = tavilyResponse(2).results;
-  await writeFile(join(root, "data/discovery-cache.json"), `${JSON.stringify({
-    version: 1,
-    created_at: "2026-09-27T11:00:00Z",
-    updated_at: "2026-09-27T11:05:00Z",
-    discovery: { current_date: "2026-09-27", query_log: [], tavily_summary: {}, configuration: { geminiBatchSize: 1 } },
-    gemini_context: { profile, existing_opportunities: [] },
-    candidates,
-    batches: [
-      {
-        index: 0,
-        candidate_indexes: [0],
-        status: "completed",
-        attempts: 1,
-        completed_at: "2026-09-27T11:04:00Z",
-        merged_at: "2026-09-27T11:04:00Z",
-        merge_stats: { received: 0, accepted: 0, rejected: 0, duplicates: 0, newRecords: 0, updatedRecords: 0 },
-        merge_validation_version: 2,
-        opportunities: []
-      },
-      {
-        index: 1,
-        candidate_indexes: [1],
-        status: "retry_pending",
-        attempts: 5,
-        extracted_at: null,
-        completed_at: null,
-        merged_at: null,
-        opportunities: []
-      }
-    ],
-    state: { status: "retry_pending", attempts: 5, last_error: { http_status: 503 } }
-  }, null, 2)}\n`);
+test('local discovery caches sources before extraction and persists valid updates', async () => {
+  const root = await workspace();
+  const report = await runDiscovery({...options(root),extract:async()=>{
+    await access(join(root,'.cache/discovery.json'));
+    return {opportunities:[opportunity()]};
+  }});
+  assert.equal(report.accepted,1);
+  assert.equal((await readData(root)).opportunities.length,1);
+});
 
-  let geminiCalls = 0;
-  const requestedUrls = [];
-  const result = await runDiscovery({
-    root,
-    env: { GEMINI_API_KEY: "test" },
-    now: () => new Date("2026-10-04T12:00:00Z"),
-    search: async () => { throw new Error("Tavily must not run during cached recovery"); },
-    extract: async ({ candidates: batchCandidates }) => {
-      geminiCalls++;
-      requestedUrls.push(batchCandidates[0].url);
-      return { opportunities: [extractedOpportunity(batchCandidates[0], 1)] };
-    },
-    logger: quietLogger
-  });
+test('total inference failure preserves the original dataset byte for byte', async () => {
+  const root = await workspace();
+  const before = await readFile(join(root,'data/opportunities.json'),'utf8');
+  await assert.rejects(runDiscovery({...options(root),extract:async()=>{throw new Error('timeout')}}),/Every inference/);
+  assert.equal(await readFile(join(root,'data/opportunities.json'),'utf8'),before);
+  await access(join(root,'.cache/discovery.json'));
+});
 
-  assert.equal(result.outcome, "completed");
-  assert.equal(result.tavilyRequests, 0);
-  assert.equal(geminiCalls, 1);
-  assert.deepEqual(requestedUrls, ["https://events.example.org/workshop-2"]);
-  await assert.rejects(access(join(root, "data/discovery-cache.json")), { code: "ENOENT" });
+test('partial inference failure preserves success and retries only failed sources', async () => {
+  const root = await workspace();
+  const search = async()=>({results:[source,{...source,url:'https://example.org/other',title:'Other workshop'}]});
+  let calls=0;
+  await runDiscovery({...options(root),search,extract:async()=>{if (++calls===2) throw new Error('timeout');return {opportunities:[opportunity()]}}});
+  assert.equal((await readData(root)).opportunities.length,1);
+  calls=0;
+  await runDiscovery({...options(root),search:async()=>{throw new Error('must use cache')},extract:async()=>{calls++;return {opportunities:[]}}});
+  assert.equal(calls,1);
+});
+
+test('weekly discovery expires stale checkpoints instead of starving new searches', async () => {
+  const root = await workspace();
+  await runDiscovery({...options(root),extract:async()=>({opportunities:[]})});
+  let searches=0;
+  await runDiscovery({...options(root),now:()=>new Date('2026-10-04T12:00:00Z'),search:async()=>{searches++;return {results:[source]}},extract:async()=>({opportunities:[]})});
+  assert.equal(searches,1);
+});
+
+test('fixture replay does not overwrite live data or make search requests', async () => {
+  const root = await workspace();
+  const before = await readFile(join(root,'data/opportunities.json'),'utf8');
+  await writeFile(join(root,'fixture.json'),JSON.stringify({candidates:[source]}));
+  await runDiscovery({...options(root),env:{DISCOVERY_INPUT:'fixture.json'},search:async()=>{throw new Error('no network')},extract:async()=>({opportunities:[opportunity()]})});
+  assert.equal(await readFile(join(root,'data/opportunities.json'),'utf8'),before);
+  await access(join(root,'.cache/preview-opportunities.json'));
+});
+
+test('Tavily failure preserves existing data', async () => {
+  const root = await workspace();
+  const before = await readFile(join(root,'data/opportunities.json'),'utf8');
+  await assert.rejects(runDiscovery({...options(root),search:async()=>{throw new Error('offline')}}),/No usable sources/);
+  assert.equal(await readFile(join(root,'data/opportunities.json'),'utf8'),before);
+});
+
+test('frontend picks the earliest future milestone and excludes expired records', () => {
+  const now = new Date('2026-11-01T00:00:00Z');
+  const op = opportunity({milestones:[{type:'paper_submission',datetime:'2026-11-20T23:59:00Z'},{type:'abstract_submission',datetime:'2026-11-10T23:59:00Z'}]});
+  assert.equal(nextMilestone(op,now).type,'abstract_submission');
+  assert.equal(nextMilestone(op,new Date('2026-12-01')),null);
+  assert.equal(escapeHTML('<img src=x onerror="alert(1)">'),'&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
+  assert.deepEqual(readStored({getItem:()=>'{broken'},'key',[],Array.isArray),[]);
+});
+
+test('validation handles malformed model fields without throwing', () => {
+  for (const value of [null,[],{...opportunity(),milestones:{}},{...opportunity(),milestones:[null]},{...opportunity(),source:{url:42}},{...opportunity(),relevance:{}}]) assert.ok(validateOpportunity(value).length);
+});
+
+test('deployment rejects broken schemas and excludes demo entries', () => {
+  const good = {...opportunity(),source:{...opportunity().source,last_verified:'2026-09-27T00:00:00Z'}};
+  const demo = {...good,id:'demo',source:{...good.source,evidence:'Demonstration record'}};
+  const data = {generated_at:'2026-09-27T00:00:00Z',opportunities:[good,demo]};
+  assert.equal(publicDataset(data).opportunities.length,1);
+  assert.throws(()=>publicDataset({...data,opportunities:[{...good,location:null}]}),/location/);
+  assert.throws(()=>publicDataset({...data,opportunities:[good,good]}),/duplicate/);
+});
+
+test('static build contains only public assets, no model, checkpoint or scripts', async () => {
+  const root = await workspace();
+  for (const file of ['index.html','app.js','styles.css','radar-utils.js','profile-utils.js','github-profile.js']) await writeFile(join(root,file),'test');
+  const good = {...opportunity(),source:{...opportunity().source,last_verified:'2026-09-27T00:00:00Z'}};
+  await writeFile(join(root,'data/opportunities.json'),JSON.stringify({generated_at:'2026-09-27T00:00:00Z',opportunities:[good]}));
+  await mkdir(join(root,'site'));
+  await writeFile(join(root,'site/model.gguf'),'should not survive rebuild');
+  await buildSite(root);
+  assert.deepEqual((await readdir(join(root,'site'))).sort(),['.nojekyll','app.js','data','github-profile.js','index.html','profile-utils.js','radar-utils.js','styles.css']);
+  assert.deepEqual((await readdir(join(root,'site/data'))).sort(),['opportunities.json','profile.json']);
+});
+
+
+test('real model child process is killed on timeout and errors omit source prompts', async () => {
+  const root = await workspace();
+  const binary = join(root,'slow-model');
+  await writeFile(binary,'#!/usr/bin/env python3\nimport time\ntime.sleep(5)\n');
+  await chmod(binary,0o755);
+  const started = Date.now();
+  await assert.rejects(runLocalModel({prompt:'private source marker',env:{RADAR_LLAMA_CLI:binary,LOCAL_MODEL_TIMEOUT_MS:'200'}}),error=> /timed out/.test(error.message) && !error.message.includes('private source marker'));
+  assert.ok(Date.now()-started < 3000);
 });

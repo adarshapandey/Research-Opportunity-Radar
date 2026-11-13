@@ -5,9 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "python3 -m http.server 4173",
-    "check": "node --check app.js && node --check scripts/discover.mjs && node --check scripts/discovery-queries.mjs && node --check scripts/providers/tavily.mjs && node --check scripts/providers/gemini.mjs && node --check scripts/lib/opportunity-store.mjs",
+    "check": "node scripts/check.mjs",
     "discover": "node scripts/discover.mjs",
-    "test": "node --test scripts/tests/*.test.mjs"
+    "test": "node --test scripts/tests/*.test.mjs",
+    "build": "node scripts/build-site.mjs",
+    "preview": "python3 -m http.server 4173 --directory site",
+    "model:setup": "python3 scripts/local_runtime.py setup",
+    "model:evaluate": "node scripts/evaluate-model.mjs",
+    "discover:replay": "DISCOVERY_INPUT=scripts/fixtures/cached-tavily.json node scripts/discover.mjs"
   },
   "engines": {
     "node": ">=20"

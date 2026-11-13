@@ -1,0 +1,84 @@
+{
+  "candidates": [
+    {
+      "title": "Vision Workshop 2027",
+      "url": "https://example.org/vision",
+      "content": "Vision Workshop 2027 is a workshop on Computer Vision and Medical Imaging. Paper submission deadline: November 30, 2026, 11:59 PM AoE.",
+      "expected": [
+        {
+          "type": "paper_submission",
+          "datetime": "2026-11-30T23:59:00-12:00"
+        }
+      ],
+      "expected_event": {
+        "title": "Vision Workshop 2027",
+        "type": "workshop",
+        "year": 2027
+      }
+    },
+    {
+      "title": "Learning Conference 2027",
+      "url": "https://example.org/learning",
+      "content": "Learning Conference 2027 welcomes Deep Learning research. Abstract submission deadline: November 20, 2026, 5:00 PM UTC. Paper submission deadline: November 27, 2026, 5:00 PM UTC.",
+      "expected": [
+        {
+          "type": "abstract_submission",
+          "datetime": "2026-11-20T17:00:00+00:00"
+        },
+        {
+          "type": "paper_submission",
+          "datetime": "2026-11-27T17:00:00+00:00"
+        }
+      ],
+      "expected_event": {
+        "title": "Learning Conference 2027",
+        "type": "conference",
+        "year": 2027
+      }
+    },
+    {
+      "title": "Remote Sensing Workshop 2027",
+      "url": "https://example.org/remote",
+      "content": "Remote Sensing Workshop 2027 focuses on Remote Sensing. Paper submission deadline: December 8, 2026, 17:00 UTC+01:00.",
+      "expected": [
+        {
+          "type": "paper_submission",
+          "datetime": "2026-12-08T17:00:00+01:00"
+        }
+      ],
+      "expected_event": {
+        "title": "Remote Sensing Workshop 2027",
+        "type": "workshop",
+        "year": 2027
+      }
+    },
+    {
+      "title": "Ambiguous Workshop 2027",
+      "url": "https://example.org/missing-time",
+      "content": "Ambiguous Workshop 2027 welcomes Computer Vision. Paper submission deadline: December 8, 2026. No submission time or timezone has been announced.",
+      "expected": []
+    },
+    {
+      "title": "Ambiguous Zone Conference 2027",
+      "url": "https://example.org/missing-zone",
+      "content": "Ambiguous Zone Conference 2027 focuses on Deep Learning. Paper submission deadline: December 8, 2026, 5:00 PM. Timezone to be announced.",
+      "expected": []
+    },
+    {
+      "title": "Vision Event 2027",
+      "url": "https://example.org/event-only",
+      "content": "Vision Event 2027 is a Computer Vision conference. Conference takes place March 8, 2027, 10:00 AM UTC. Submission deadlines have not been announced.",
+      "expected": []
+    }
+  ],
+  "profile": {
+    "research_areas": [
+      "Computer Vision",
+      "Medical Imaging",
+      "Deep Learning",
+      "Remote Sensing"
+    ],
+    "current_projects": [],
+    "keywords": []
+  }
+}

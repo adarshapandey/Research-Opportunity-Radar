@@ -64,6 +64,7 @@ export function buildDiscoveryQueries(profile, limit, currentDate = new Date()) 
 }
 
 export function buildOfficialSourceQueries(results, limit, currentDate = new Date()) {
+  if (limit <= 0) return [];
   const years = `${currentDate.getUTCFullYear()} ${currentDate.getUTCFullYear() + 1}`;
   const seen = new Set();
   const queries = [];
@@ -114,7 +115,7 @@ export function deduplicateSearchResults(results, maxCandidates = 30, maxContent
   for (const result of results) {
     const canonicalUrl = canonicalizeUrl(result.url);
     if (!canonicalUrl) continue;
-    const content = cleanTerm(result.raw_content || result.content).slice(0, maxContentChars);
+    const content = String(result.raw_content || result.content || '').trim().slice(0, maxContentChars);
     const current = unique.get(canonicalUrl);
     const query = cleanTerm(result.discovery_query);
 

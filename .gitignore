@@ -4,3 +4,11 @@
 node_modules/
 *.log
 architecture.md
+.cache/
+site/
+.venv/
+*.gguf
+__pycache__/
+.codex
+.aws/
+# docs/

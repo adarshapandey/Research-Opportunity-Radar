@@ -1,52 +1,134 @@
-name: Discover research opportunities
+name: Discover and deploy dev
+run-name: ${{ inputs.request_id && format('Profile update {0}', inputs.request_id) || 'Research radar update' }}
 
 on:
+  push:
+    branches: [dev]
   workflow_dispatch:
     inputs:
-      force_gemini_retry:
-        description: Retry cached work blocked by a permanent/configuration error
-        required: false
-        default: false
+      run_discovery:
+        description: Run Tavily and the local CPU model before publishing
         type: boolean
+        default: true
+      profile_json:
+        description: Profile fields submitted by the website (optional)
+        type: string
+        default: ''
+      profile_base_sha:
+        description: Expected Git blob revision of data/profile.json
+        type: string
+        default: ''
+      request_id:
+        description: Website request identifier for progress tracking
+        type: string
+        default: ''
   schedule:
-    - cron: "0 1 * * 2"
+    - cron: '11 23 * * 5'
+      timezone: America/Los_Angeles
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
-  group: opportunity-discovery
+  group: radar-dev-publish
   cancel-in-progress: false
 
 jobs:
-  discover:
-    runs-on: ubuntu-latest
+  publish:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: dev
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Discover, extract, and validate calls
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check code and run offline tests
+        run: |
+          npm run check
+          npm test
+      - name: Commit research profile
+        if: github.event_name == 'workflow_dispatch' && inputs.profile_json != ''
+        env:
+          PROFILE_JSON: ${{ inputs.profile_json }}
+          PROFILE_BASE_SHA: ${{ inputs.profile_base_sha }}
+        run: |
+          node scripts/apply-profile.mjs
+          if ! git diff --quiet -- data/profile.json; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -- data/profile.json
+            git commit -m 'profile: update research interests'
+            git push origin HEAD:dev
+          fi
+      - name: Restore pinned local model and runtime
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.run_discovery || inputs.profile_json != ''))
+        uses: actions/cache@v4
+        with:
+          path: .cache/local-model
+          key: local-model-linux-x64-${{ hashFiles('scripts/model-config.json') }}
+      - name: Restore recent source checkpoints
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.run_discovery || inputs.profile_json != ''))
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/discovery.json
+          key: discovery-dev-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: discovery-dev-
+      - name: Verify/download CPU model and runtime
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.run_discovery || inputs.profile_json != ''))
+        run: npm run model:setup
+      - name: Test actual local model extraction before discovery
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.run_discovery || inputs.profile_json != ''))
+        run: npm run model:evaluate
+      - name: Search and extract locally
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.run_discovery || inputs.profile_json != ''))
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: gemini-3.8-flash
           TAVILY_MAX_QUERIES: 10
-          TAVILY_RESULTS_PER_QUERY: 5
-          TAVILY_MAX_CANDIDATES: 30
-          GEMINI_BATCH_SIZE: 10
-          GEMINI_MAX_IMMEDIATE_ATTEMPTS: 5
-          FORCE_GEMINI_RETRY: ${{ github.event.inputs.force_gemini_retry || 'false' }}
-        run: node scripts/discover.mjs
-      - name: Commit verified data changes
-        if: always()
+          TAVILY_MAX_CANDIDATES: 20
+          LOCAL_MODEL_TIMEOUT_MS: 180000
+        run: npm run discover
+      - name: Validate and stage public assets
+        run: npm run build
+      - name: Commit accepted data to dev
         run: |
-          if [ -z "$(git status --porcelain -- data/opportunities.json data/discovery-cache.json)" ]; then
-            echo "No opportunity or discovery-cache changes"
-            exit 0
+          if ! git diff --quiet -- data/opportunities.json; then
+            git config user.name 'adarshapandey'
+            git config user.email 'adarshapandey@users.noreply.github.com'
+            git add -- data/opportunities.json
+            git commit -m 'data: update research opportunities'
+            git push origin HEAD:dev
           fi
-          git config user.name "adarshapandey"
-          git config user.email "adarshapandey@users.noreply.github.com"
-          git add -A -- data
-          git commit -m "data: checkpoint research discovery"
-          git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Publish validated site
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Save source checkpoints even after failure
+        if: always() && hashFiles('.cache/discovery.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/discovery.json
+          key: discovery-dev-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Save diagnostic reports
+        if: always() && hashFiles('.cache/*-*.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: discovery-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .cache/model-evaluation.json
+            .cache/discovery-report.json
+          if-no-files-found: ignore
+          retention-days: 14

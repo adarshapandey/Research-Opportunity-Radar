@@ -12,6 +12,7 @@ export async function searchTavily({ apiKey, query, maxResults = 5 }) {
   if (!apiKey) throw new Error("TAVILY_API_KEY is required for live discovery.");
 
   const response = await fetch(SEARCH_ENDPOINT, {
+    signal: AbortSignal.timeout(30000),
     method: "POST",
     headers: {
       authorization: `Bearer ${apiKey}`,

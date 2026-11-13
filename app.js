@@ -1,27 +1,23 @@
+import { escapeHTML as h, nextMilestone, readStored, formatScanAge } from './radar-utils.js';
+import { saveProfileAndRun } from './github-profile.js';
 const DEMO_NOW = new Date();
 const state = {
   opportunities: [],
   filter: "all",
   discoveryIndex: 0,
-  watchlist: JSON.parse(localStorage.getItem("radar-watchlist") || '["cvpr-2027"]'),
-  profile: JSON.parse(localStorage.getItem("radar-profile") || "null"),
+  watchlist: readStored(localStorage, "radar-watchlist", ["cvpr-2027"], value => Array.isArray(value) && value.every(id => typeof id === "string")),
+  profile: null,
 };
 
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
 function nextActionable(opportunity) {
-  const priority = ["paper_submission", "abstract_submission", "supplementary_material", "camera_ready", "notification"];
-  const future = opportunity.milestones.filter(m => new Date(m.datetime) > DEMO_NOW);
-  for (const type of priority) {
-    const found = future.find(m => m.type === type);
-    if (found) return found;
-  }
-  return opportunity.milestones.at(-1);
+  return nextMilestone(opportunity, new Date());
 }
 
 function daysUntil(datetime) {
-  return Math.max(0, Math.ceil((new Date(datetime) - DEMO_NOW) / 86400000));
+  return Math.max(0, Math.ceil((new Date(datetime) - new Date()) / 86400000));
 }
 
 function formatDate(milestone, includeTime = false) {
@@ -31,9 +27,7 @@ function formatDate(milestone, includeTime = false) {
   const sourceDate = new Date(Date.UTC(year, month - 1, day));
   const base = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(sourceDate);
   if (!includeTime) return base;
-  const raw = milestone.original_text.split(", ").slice(-2).join(", ");
-  const timeMatch = raw.match(/(\d{1,2}:\d{2}\s(?:AM|PM))/i);
-  return `${base} · ${timeMatch?.[1] || "time not specified"} ${milestone.timezone_label === "Anywhere on Earth" ? "AoE" : milestone.timezone}`;
+  return `${base} · ${milestone.datetime.slice(11, 16)} ${milestone.timezone_label === "Anywhere on Earth" ? "AoE" : milestone.timezone}`;
 }
 
 function localDate(milestone) {
@@ -41,12 +35,18 @@ function localDate(milestone) {
 }
 
 function sortedOpportunities() {
-  return [...state.opportunities].sort((a, b) => new Date(nextActionable(a).datetime) - new Date(nextActionable(b).datetime));
+  return state.opportunities.filter(op => op.matches_profile !== false && nextActionable(op)).sort((a, b) => new Date(nextActionable(a).datetime) - new Date(nextActionable(b).datetime));
 }
 
 function renderHero() {
   const op = sortedOpportunities()[0];
-  if (!op) return;
+  if (!op) {
+    $("#hero-title").textContent = "No upcoming deadlines";
+    $("#hero-days").textContent = "—";
+    $("#hero-type").textContent = "Check source pages for new calls";
+    $("#open-hero").hidden = true; $("#watch-hero").hidden = true;
+    return;
+  }
   const milestone = nextActionable(op);
   $("#hero-title").textContent = op.title;
   $("#hero-type").textContent = `${op.type_label} · ${op.relevance.label}`;
@@ -67,9 +67,9 @@ function renderList() {
   const items = (state.filter === "all" ? all : all.filter(op => op.type === state.filter)).slice(0, 4);
   $("#opportunity-list").innerHTML = items.map(op => {
     const deadline = nextActionable(op);
-    return `<article class="opportunity-row" tabindex="0" data-open="${op.id}">
-      <div class="opportunity-name"><span class="type-mark ${op.type}"></span><div><h3>${op.title}</h3><p>${deadline.label} · ${formatDate(deadline)}</p></div></div>
-      <span class="mini-match">${op.relevance.label}</span>
+    return `<article class="opportunity-row" tabindex="0" data-open="${h(op.id)}">
+      <div class="opportunity-name"><span class="type-mark ${h(op.type)}"></span><div><h3>${h(op.title)}</h3><p>${h(deadline.label)} · ${formatDate(deadline)}</p></div></div>
+      <span class="mini-match">${h(op.relevance.label)}</span>
       <div class="row-count"><strong>${daysUntil(deadline.datetime)}</strong><span>days</span></div>
     </article>`;
   }).join("") || `<div class="search-empty">No ${state.filter}s in range.</div>`;
@@ -77,12 +77,12 @@ function renderList() {
 }
 
 function renderDiscovery() {
-  const discoveries = state.opportunities.filter(op => op.discovered);
+  const discoveries = state.opportunities.filter(op => op.discovered && op.matches_profile !== false);
   const op = discoveries[state.discoveryIndex % discoveries.length];
   if (!op) return;
-  $("#discovery-card").innerHTML = `<div class="discovery-visual"><span>NEW SIGNAL · ${op.type.toUpperCase()}</span></div>
-    <div class="discovery-body"><h3>${op.title}</h3><p>${op.relevance.reason}</p><div class="tag-row">${op.relevance.matched_topics.map(t => `<span class="tag">${t}</span>`).join("")}</div>
-    <div class="discovery-footer"><span>${op.parent_event ? `At ${op.parent_event}` : op.type_label}</span><button data-open="${op.id}">Inspect →</button></div></div>`;
+  $("#discovery-card").innerHTML = `<div class="discovery-visual"><span>NEW SIGNAL · ${h(op.type.toUpperCase())}</span></div>
+    <div class="discovery-body"><h3>${h(op.title)}</h3><p>${h(op.relevance.reason)}</p><div class="tag-row">${op.relevance.matched_topics.map(t => `<span class="tag">${h(t)}</span>`).join("")}</div>
+    <div class="discovery-footer"><span>${op.parent_event ? `At ${h(op.parent_event)}` : h(op.type_label)}</span><button data-open="${h(op.id)}">Inspect →</button></div></div>`;
   bindOpeners();
 }
 
@@ -94,20 +94,20 @@ function renderTimeline() {
       const d = new Date(nextActionable(op).datetime);
       return d.getMonth() === month.getMonth() && d.getFullYear() === month.getFullYear();
     });
-    return `<div class="month"><div class="month-name">${month.toLocaleString("en-US", { month: "long" })}</div>${events.map(op => `<div class="timeline-event ${op.type}"><i></i><span>${op.short_title || op.title}</span></div>`).join("")}</div>`;
+    return `<div class="month"><div class="month-name">${month.toLocaleString("en-US", { month: "long" })}</div>${events.map(op => `<div class="timeline-event ${h(op.type)}"><i></i><span>${h(op.short_title || op.title)}</span></div>`).join("")}</div>`;
   }).join("");
 }
 
 function cardTemplate(op) {
   const deadline = nextActionable(op);
   const tracked = state.watchlist.includes(op.id);
-  return `<article class="opportunity-card"><div class="card-top"><span class="card-type">${op.type_label}${op.parent_event ? ` · ${op.parent_event}` : ""}</span><button class="card-watch ${tracked ? "tracked" : ""}" data-watch="${op.id}" aria-label="${tracked ? "Remove from" : "Add to"} watchlist">${tracked ? "✓" : "+"}</button></div>
-    <h2>${op.title}</h2><div class="card-date">${deadline.label} · ${formatDate(deadline)}</div><p class="card-reason">${op.relevance.reason}</p>
-    <div class="card-bottom"><span class="match-label">${op.relevance.label}</span><button data-open="${op.id}">Details →</button></div></article>`;
+  return `<article class="opportunity-card"><div class="card-top"><span class="card-type">${h(op.type_label)}${op.parent_event ? ` · ${h(op.parent_event)}` : ""}</span><button class="card-watch ${tracked ? "tracked" : ""}" data-watch="${h(op.id)}" aria-label="${tracked ? "Remove from" : "Add to"} watchlist">${tracked ? "✓" : "+"}</button></div>
+    <h2>${h(op.title)}</h2><div class="card-date">${deadline ? `${h(deadline.label)} · ${formatDate(deadline)}` : "No upcoming milestones"}</div><p class="card-reason">${h(op.relevance.reason)}</p>
+    <div class="card-bottom"><span class="match-label">${h(op.relevance.label)}</span><button data-open="${h(op.id)}">Details →</button></div></article>`;
 }
 
 function renderGrids() {
-  const discoveries = state.opportunities.filter(op => op.discovered);
+  const discoveries = state.opportunities.filter(op => op.discovered && op.matches_profile !== false);
   $("#discoveries-grid").innerHTML = discoveries.map(cardTemplate).join("");
   const watched = state.opportunities.filter(op => state.watchlist.includes(op.id));
   $("#watchlist-grid").innerHTML = watched.map(cardTemplate).join("");
@@ -126,13 +126,13 @@ function bindOpeners() {
 function openDetails(id) {
   const op = state.opportunities.find(item => item.id === id);
   const next = nextActionable(op);
-  $("#detail-content").innerHTML = `<header class="detail-head"><p class="eyebrow">${op.type_label}${op.parent_event ? ` · ${op.parent_event}` : ""}</p><h2 id="detail-title">${op.title}</h2><p>${op.organization}</p><span class="detail-count">${daysUntil(next.datetime)} days to ${next.label}</span></header>
+  $("#detail-content").innerHTML = `<header class="detail-head"><p class="eyebrow">${h(op.type_label)}${op.parent_event ? ` · ${h(op.parent_event)}` : ""}</p><h2 id="detail-title">${h(op.title)}</h2><p>${h(op.organization)}</p><span class="detail-count">${next ? `${daysUntil(next.datetime)} days to ${h(next.label)}` : "No upcoming milestones"}</span></header>
     <div class="detail-body">
-      ${op.updated ? `<div class="demo-notice"><span>Deadline changed</span>${op.change_note}</div>` : ""}
-      <section class="detail-section"><h3>Milestones</h3><div class="milestone-list">${op.milestones.map(m => `<div class="milestone ${m === next ? "next" : ""}"><b>${m.label}</b><span>${formatDate(m, true)}<br><small>Local: ${localDate(m)}</small></span></div>`).join("")}</div></section>
-      <section class="detail-section"><h3>Why this matches you</h3><div class="tag-row">${op.relevance.matched_topics.map(t => `<span class="tag">${t}</span>`).join("")}</div><p>${op.relevance.reason}</p></section>
-      <section class="detail-section"><h3>Opportunity</h3><p>${op.type_label}${op.parent_event ? ` attached to ${op.parent_event}` : ""} · ${op.location.city}, ${op.location.country}${op.location.virtual ? " · Virtual option" : ""}</p></section>
-      <section class="detail-section"><h3>Source verification</h3><div class="source-card"><div><p>${op.source.type}</p><small>Last checked ${new Date(op.source.last_verified).toLocaleString()} · ${op.source.evidence}</small></div><a href="${op.source.url}" target="_blank" rel="noopener">Open source ↗</a></div></section>
+      ${op.updated ? `<div class="demo-notice"><span>Deadline changed</span>${h(op.change_note)}</div>` : ""}
+      <section class="detail-section"><h3>Milestones</h3><div class="milestone-list">${op.milestones.map(m => `<div class="milestone ${m === next ? "next" : ""}"><b>${h(m.label)}</b><span>${formatDate(m, true)}<br><small>Local: ${localDate(m)}</small></span></div>`).join("")}</div></section>
+      <section class="detail-section"><h3>Why this matches you</h3><div class="tag-row">${op.relevance.matched_topics.map(t => `<span class="tag">${h(t)}</span>`).join("")}</div><p>${h(op.relevance.reason)}</p></section>
+      <section class="detail-section"><h3>Opportunity</h3><p>${h(op.type_label)}${op.parent_event ? ` attached to ${h(op.parent_event)}` : ""} · ${h(op.location.city)}, ${h(op.location.country)}${op.location.virtual ? " · Virtual option" : ""}</p></section>
+      <section class="detail-section"><h3>Source verification</h3><div class="source-card"><div><p>${h(op.source.type)}</p><small>Last checked ${new Date(op.source.last_verified).toLocaleString()} · ${h(op.source.evidence)}</small></div><a href="${h(op.source.url)}" target="_blank" rel="noopener">Open source ↗</a></div></section>
     </div>`;
   showModal("detail-modal");
 }
@@ -148,7 +148,7 @@ function toggleWatch(id) {
 function showView(name) {
   $$(".view").forEach(view => view.classList.toggle("active", view.id === `view-${name}`));
   $$(".nav-link").forEach(button => button.classList.toggle("active", button.dataset.view === name));
-  location.hash = name;
+  if (location.hash !== `#${name}`) location.hash = name;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -157,7 +157,8 @@ function showModal(id) {
   setTimeout(() => $("button, input", modal)?.focus(), 20);
 }
 
-function closeModal(id) { $(`#${id}`).hidden = true; document.body.style.overflow = ""; }
+let profileSaveController;
+function closeModal(id) { if (id === "profile-modal") profileSaveController?.abort(); $(`#${id}`).hidden = true; document.body.style.overflow = ""; }
 
 function toast(message) {
   const el = $("#toast"); el.textContent = message; el.classList.add("show");
@@ -174,7 +175,7 @@ function closeSearch() { $("#search-overlay").hidden = true; document.body.style
 function renderSearch(query) {
   const q = query.toLowerCase().trim();
   const matches = state.opportunities.filter(op => !q || [op.title, op.organization, op.type_label, op.location.city, op.location.country, ...op.topics].join(" ").toLowerCase().includes(q));
-  $("#search-results").innerHTML = matches.length ? matches.map(op => `<button class="search-result" data-search-open="${op.id}"><div><b>${op.title}</b><span>${op.type_label} · ${op.topics.slice(0,2).join(" · ")}</span></div><span>${daysUntil(nextActionable(op).datetime)} days</span></button>`).join("") : `<div class="search-empty">No signal found for “${query}”.</div>`;
+  $("#search-results").innerHTML = matches.length ? matches.map(op => `<button class="search-result" data-search-open="${h(op.id)}"><div><b>${h(op.title)}</b><span>${h(op.type_label)} · ${h(op.topics.slice(0,2).join(" · "))}</span></div><span>${nextActionable(op) ? `${daysUntil(nextActionable(op).datetime)} days` : "Closed"}</span></button>`).join("") : `<div class="search-empty">No signal found for “${h(query)}”.</div>`;
   $$('[data-search-open]').forEach(button => button.onclick = () => { closeSearch(); openDetails(button.dataset.searchOpen); });
 }
 
@@ -184,12 +185,43 @@ function setupProfile(profile) {
   form.areas.value = state.profile.research_areas.join("\n");
   form.projects.value = state.profile.current_projects.join("\n");
   form.keywords.value = state.profile.keywords.join("\n");
-  form.onsubmit = event => {
+  form.onsubmit = async event => {
     event.preventDefault();
+    if (profileSaveController) return;
     const lines = value => value.split("\n").map(v => v.trim()).filter(Boolean);
-    state.profile = { ...state.profile, research_areas: lines(form.areas.value), current_projects: lines(form.projects.value), keywords: lines(form.keywords.value) };
-    localStorage.setItem("radar-profile", JSON.stringify(state.profile));
-    closeModal("profile-modal"); toast("Research profile updated");
+    const changes = { research_areas: lines(form.areas.value), current_projects: lines(form.projects.value), keywords: lines(form.keywords.value) };
+    const token = $("#github-token").value;
+    $("#github-token").value = "";
+    profileSaveController = new AbortController();
+    $("#profile-fields").disabled = true;
+    $("#profile-save").disabled = true;
+    $("#profile-save").textContent = "Saving profile…";
+    $("#profile-cancel").textContent = "Continue in background";
+    const progress = $("#profile-progress");
+    progress.hidden = false;
+    progress.classList.add("busy");
+    $("#profile-run-link").hidden = true;
+    const update = ({message,runURL}) => {
+      $("#profile-status").textContent = message;
+      if (runURL) { $("#profile-run-link").href = runURL; $("#profile-run-link").hidden = false; }
+    };
+    try {
+      const result = await saveProfileAndRun({token,changes,signal:profileSaveController.signal,onStatus:update});
+      state.profile = {...state.profile,...result.profile};
+      try { localStorage.removeItem("radar-profile"); } catch { /* Repository is authoritative. */ }
+      $("#profile-status").textContent = "Profile saved and radar published. Reloading your radar…";
+      // Let Pages propagation begin; subsequent data requests bypass the browser cache.
+      setTimeout(() => location.reload(), 3000);
+    } catch (error) {
+      if (error.name !== "AbortError") update({message:error.message,runURL:error.runURL});
+    } finally {
+      progress.classList.remove("busy");
+      $("#profile-fields").disabled = false;
+      $("#profile-save").disabled = false;
+      $("#profile-save").textContent = "Save profile & update radar";
+      $("#profile-cancel").textContent = "Close";
+      profileSaveController = null;
+    }
   };
 }
 
@@ -199,6 +231,7 @@ function bindUI() {
   $$("[data-close]").forEach(button => button.onclick = () => closeModal(button.dataset.close));
   $$(".modal-backdrop").forEach(modal => modal.onclick = event => { if (event.target === modal) closeModal(modal.id); });
   $$(".segmented button").forEach(button => button.onclick = () => { state.filter = button.dataset.filter; $$(".segmented button").forEach(b => b.classList.toggle("active", b === button)); renderList(); });
+  window.addEventListener("hashchange", () => { const view = location.hash.slice(1); showView(["radar","discoveries","watchlist"].includes(view) ? view : "radar"); });
   $("#next-discovery").onclick = () => { state.discoveryIndex++; renderDiscovery(); };
   $("#view-all").onclick = () => showView("discoveries");
   $("#profile-button").onclick = () => showModal("profile-modal");
@@ -214,12 +247,12 @@ function bindUI() {
 
 async function init() {
   try {
-    const [opportunities, profile] = await Promise.all([fetch("data/opportunities.json").then(r => r.json()), fetch("data/profile.json").then(r => r.json())]);
+    const [opportunities, profile] = await Promise.all([fetch("data/opportunities.json", {cache:"no-store"}).then(r => r.json()), fetch("data/profile.json", {cache:"no-store"}).then(r => r.json())]);
     state.opportunities = opportunities.opportunities;
-    $("#prototype-notice").hidden = opportunities.data_mode !== "demonstration";
+    $("#prototype-notice").hidden = !state.opportunities.some(op => /demonstration/i.test(op.source?.evidence || ""));
+    $("#discovery-count").textContent = state.opportunities.filter(op => op.discovered && op.matches_profile !== false).length;
     $("#today-label").textContent = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(DEMO_NOW);
-    const scanHours = Math.max(0, Math.round((DEMO_NOW - new Date(opportunities.generated_at)) / 3600000));
-    $("#scan-age").textContent = opportunities.data_mode === "demonstration" ? "prototype dataset" : scanHours < 1 ? "less than an hour ago" : `${scanHours} hours ago`;
+    $("#scan-age").textContent = opportunities.data_mode === "demonstration" ? "prototype dataset" : formatScanAge(opportunities.generated_at, DEMO_NOW);
     setupProfile(profile);
     renderHero(); renderList(); renderDiscovery(); renderTimeline(); renderGrids(); bindUI();
     const initial = location.hash.slice(1);

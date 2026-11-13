@@ -1,82 +1,90 @@
-# AI Research Opportunity Radar
+# Research Opportunity Radar
 
-A calm, deadline-first personal web app for autonomously discovering globally relevant AI conferences and workshops, preserving timezone semantics (including AoE), and explaining why each call overlaps with an evolving research profile.
+A static personal conference/workshop radar with Tuesday discovery performed entirely in GitHub Actions. Tavily supplies source content. A pinned Qwen2.5-3B-Instruct Q4_K_M model runs locally on the runner's CPU using llama.cpp b6000. No hosted inference API or Gemini key is used.
 
-The repository is deliberately static and designed for free-tier operation: GitHub Pages serves the interface, GitHub Actions runs discovery on a schedule, Tavily searches the open web, and Gemini extracts and reasons over the returned source material. Neither API key ever reaches the browser.
+The website loads only HTML, CSS, JavaScript and public JSON. Inference never runs in the browser. The public build excludes model weights, source caches, scripts and diagnostic reports. A failed discovery, model evaluation, build, or deployment leaves the previous Pages deployment available.
 
-## What works
+## Branches and activation
 
-- Deadline-first radar with a motivational countdown
-- Conferences and workshops as first-class opportunity types
-- Multiple typed milestones per opportunity
-- AoE/UTC-12 preservation plus local-time conversion in detail views
-- Evidence-linked relevance explanations and source freshness
-- Deadline change signals
-- AI discovery feed, timeline, search, filters, and opportunity details
-- Device-local watchlist and editable research profile
-- Responsive keyboard-accessible interface
-- Scheduled Tavily discovery with batched Gemini extraction
-- Durable Tavily-to-Gemini cache with batch-level recovery checkpoints
-- Deterministic URL/title identity matching plus source-constrained validation
-- GitHub Pages deployment workflow
+- `main`: old implementation; leave it unchanged.
+- `dev`: new implementation and the single discovery/deployment workflow.
+- Make `dev` the GitHub repository's default branch **after local testing and pushing it**. GitHub schedules run from the default branch; changing this setting does not modify `main`.
+- The workflow runs Tuesdays at **06:17 America/Los_Angeles**, with daylight saving handled by the schedule timezone. GitHub may delay scheduled jobs.
+- Pushes to `dev` publish validated static assets without downloading a model or spending Tavily credits. Scheduled runs perform discovery, then publish within the same workflow. A manual run can optionally perform discovery.
+- Pages serves the new version at the existing URL. It does not create a second preview URL for `dev`.
 
-The bundled opportunity records are clearly marked demonstration data. They make the product fully explorable before the live discovery workflow is connected, but should not be used as submission advice.
+See [the local testing guide](docs/LOCAL_TESTING.md) before pushing. This checkout does not change GitHub settings automatically.
 
-## Run locally
+## Pipeline
+
+1. Generate up to ten profile-derived Tavily searches, including official-source refinements.
+2. Deduplicate and retain up to twenty candidate pages, 6,000 characters each.
+3. Persist source checkpoints under ignored `.cache/` before inference.
+4. Process one page at a time with the local CPU model, an 8,192-token context, at most 1,800 output tokens and a three-minute per-page timeout. Child processes are killed on timeout.
+5. Constrain output to a JSON schema. Require exact source excerpts and source-supported titles/topics. Code parses dates and timezones from evidence; the model cannot invent a normalized datetime.
+6. Accept only relevant records with valid display fields and at least one future milestone. Ambiguous deadlines are omitted rather than guessed.
+7. Merge accepted records, validate the public dataset, commit data to `dev`, and directly deploy the staged `site/` artifact.
+
+Partial source failures do not discard successful extractions. Complete inference failure preserves the dataset. Checkpoints expire after 48 hours, so last week's failures cannot indefinitely prevent fresh searches. Recent retry runs can reuse completed pages. Model evaluation failure blocks scheduled discovery and publishing.
+
+## Accuracy and coverage
+
+The local model is an extractor, not an authority. Every accepted milestone must contain an explicit date, year, time and timezone together in a source excerpt. The deterministic parser supports English month names, ISO dates, AoE, UTC/GMT and explicit UTC/GMT offsets. Unstated times, ambiguous zone abbreviations and IANA zones without an explicit supported offset are currently rejected. This intentionally reduces coverage; date-only CFPs will not become new countdowns.
+
+Relevance uses exact case-insensitive matches against repository profile terms, with transparent template explanations. It does not claim deep semantic ranking. Source links are labeled “Search-discovered source”; being returned by search does not prove a page is official. Follow the source before relying on a deadline.
+
+Scan age displays whole hours below 24 hours and whole days thereafter.
+
+Existing historical records remain in storage. On discovery, stored records are reclassified against the current research profile; unmatched records stay in search/watchlist and are excluded from the main radar/discovery feed. The frontend excludes expired records from the next-deadline calculation, selects milestones chronologically, and still permits inspection through search/watchlist. Demonstration records are excluded from the published artifact. There is no automatic deletion of historical records.
+
+The model passed the six checked-in labeled smoke cases during development; that is a regression check, not a general accuracy benchmark. See `docs/MODEL_EVALUATION.md` for measured results and limitations.
+
+## Prerequisites
+
+- Node.js **22+** and npm.
+- Python **3.10+**.
+- Linux x64 for the bundled prebuilt CPU runtime (the Actions workflow uses Ubuntu 22.04).
+- About **2.1 GB** for model weights plus runtime/download space; allow **6 GB free disk** and **8 GB RAM** as a practical local starting point.
+- No `npm install` is required: the JavaScript code has no package dependencies.
+
+Model and runtime downloads are pinned and SHA-256 verified. Their URLs, revisions and checksums are in `scripts/model-config.json`. The model carries the upstream [Qwen Research license](https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/blob/main/LICENSE).
+
+## Commands
 
 ```bash
-clone the repository
-npm run dev
+npm run check          # Syntax-check application and scripts
+npm test               # Offline regression and frontend smoke tests
+npm run build          # Validate data and create public site/ only
+npm run preview        # Serve site/ at http://localhost:4173
+npm run model:setup    # Download/check CPU runtime and model, first run ~2.1 GB
+npm run model:evaluate # Real inference on six labeled positive/negative fixtures
+npm run discover:replay # Real inference on cached Tavily sources; preview output only
+npm run discover       # Live search; requires TAVILY_API_KEY, writes repository data
 ```
 
-Open `http://localhost:4173`. No install step is required.
+`npm run dev` serves the source tree for development. Use `npm run build` followed by `npm run preview` when checking the exact deployment artifact.
 
-
-## Safety model
-
-Tavily Search returns ranked URLs, snippets, and cleaned page content. Gemini receives only that material and has no web-search tool. Returned records are rejected unless their source URL came from Tavily, their milestones have parseable datetimes with explicit offsets and valid timezone values, and source evidence and a supported relevance label are present. Paper-deadline changes are detected before merging.
-
-The default budget is ten basic Tavily searches per discovery cycle, five results per search, at most thirty unique candidate URLs, and Gemini batches of ten. This means at most three Gemini batches for a new cycle, with up to five immediate requests per batch when retryable failures occur. Tavily results are written to `data/discovery-cache.json` before the first Gemini request. Each successful Gemini batch is immediately validated and merged into `data/opportunities.json`, then marked completed in the cache.
-
-If Gemini returns a retryable error, including 429, 500, 502, 503, or 504, the current batch is retried immediately up to five total attempts in the same process. There is no sleep between attempts and Tavily is not called again. If all five attempts fail, the cache remains for the next weekly discovery run, which skips Tavily and resumes only unfinished Gemini batches. HTTP 400, 401, 403, and 404 stop after one request and mark the cache as blocked. After fixing the configuration, use the manual workflow's **force Gemini retry** option or set `FORCE_GEMINI_RETRY=true` locally. There is no Gemini health-check request.
-
-The workflow commits cache creation, incremental opportunity updates, and checkpoints even when a later Gemini batch exits with an API error. Earlier successful batches remain visible and are not rolled back. The cache is deleted only after every Gemini batch has completed and its merge has been persisted successfully.
-
-Search results can contain stale or incomplete content, and the code does not perform a separate deterministic fetch after Tavily Search. Before relying on a deadline, follow the source link shown in the detail view.
-
-## Discovery configuration
-
-Environment variables are supplied by the shell locally and by GitHub Actions secrets/configuration in automation. No dotenv loader is used.
+## Configuration
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `TAVILY_API_KEY` | required for live runs | Tavily Search authentication. |
-| `GEMINI_API_KEY` | required for live runs | Gemini extraction authentication. |
-| `GEMINI_MODEL` | `gemini-3.8-flash` | Extraction/relevance model. |
-| `TAVILY_MAX_QUERIES` | `10` | Total search cap, hard-capped by code at 20. |
-| `TAVILY_RESULTS_PER_QUERY` | `5` | Ranked results requested per search. |
-| `TAVILY_MAX_CANDIDATES` | `30` | Unique candidate URLs retained for Gemini. |
-| `TAVILY_MAX_CONTENT_CHARS` | `6000` | Maximum source characters retained per URL. |
-| `GEMINI_BATCH_SIZE` | `10` | Candidate sources sent per Gemini call. |
-| `GEMINI_MAX_IMMEDIATE_ATTEMPTS` | `5` | Total Gemini attempts per unfinished batch in one invocation, hard-capped by code at 5. |
-| `FORCE_GEMINI_RETRY` | false | Explicitly retry cached work blocked by a permanent/configuration error. |
+| `TAVILY_API_KEY` | Required for fresh live searches | Set in shell or GitHub Actions secrets |
+| `TAVILY_MAX_QUERIES` | 10 | Total search cap, maximum 20 |
+| `TAVILY_RESULTS_PER_QUERY` | 5 | Search results per query, maximum 10 |
+| `TAVILY_MAX_CANDIDATES` | 20 | Pages processed per cycle, maximum 30 |
+| `LOCAL_MODEL_TIMEOUT_MS` | 180000 | Inference process timeout per page |
+| `RADAR_LLAMA_CLI` | `.cache/local-model/runtime/build/bin/llama-cli` | Existing compatible CLI, e.g. on macOS |
+| `RADAR_MODEL_PATH` | `.cache/local-model/model.gguf` | Existing compatible model weights |
+| `DISCOVERY_INPUT` | Unset | Replay a JSON file containing `candidates`; never calls Tavily |
+| `DISCOVERY_OUTPUT` | Live: `data/opportunities.json`; replay: `.cache/preview-opportunities.json` | Alternative output for safe local tests |
+| `SITE_DATA` | `data/opportunities.json` | Dataset to validate and stage for preview |
+| `MODEL_EVAL_INPUT` | `scripts/fixtures/extraction.json` | Alternative observed evaluation sources |
+| `MODEL_EVAL_LIMIT` | All supplied sources | Limit real model evaluation pages |
 
-With Tavily's current one-credit basic-search pricing, the default scheduled configuration uses at most ten credits per run. The repository never opts into pay-as-you-go or automatically falls back to a paid provider; plan enforcement remains the responsibility of the Tavily and Gemini accounts.
+No dotenv loader is used. Merely creating `.env` does not load variables.
 
 ## Data ownership
 
-- `data/profile.json` is the default profile used by scheduled discovery.
-- Editing the profile in the website stores a private override in that browser's `localStorage`.
-- To make profile edits affect scheduled discovery, update `data/profile.json` in the repository.
-- `data/opportunities.json` is public because GitHub Pages must serve it.
-- A pending `data/discovery-cache.json` is repository-persisted and may also be publicly served by Pages. It contains search-result URLs/content and checkpoints, never API keys.
+`data/profile.json` drives scheduled discovery. Website profile saves dispatch an authenticated GitHub Actions run that commits the new profile, discovers opportunities, and republishes the site. Watchlists remain browser-local. See [profile saving setup](docs/PROFILE_SAVING.md) for the required repository-scoped token and progress behavior. The research profile and accepted opportunities are public assets. Tavily keys remain in the Actions environment; the user token used to save profiles is held only in browser memory and sent directly to GitHub.
 
-## Useful commands
-
-```bash
-npm run check       # JavaScript syntax validation
-npm test            # dependency-free discovery/merge tests
-npm run discover    # dry run without both keys; live with both API keys
-```
-
-If a pending cache exists, `npm run discover` needs only `GEMINI_API_KEY`; it skips Tavily automatically and resumes unfinished Gemini batches.
+The former Gemini checkpoint has been removed from public data. Its Tavily candidates are preserved as `scripts/fixtures/cached-tavily.json` for reproducible local replay, excluded from the website. New checkpoints, weights, reports, preview data and `site/` are ignored by Git.
